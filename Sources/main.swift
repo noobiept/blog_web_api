@@ -2,6 +2,7 @@ import Kitura
 import HeliumLogger
 import SwiftyJSON
 import PostgreSQL
+import Foundation
 
 
 HeliumLogger.use()
@@ -25,5 +26,7 @@ router.get("/") {
     try response.status(.OK).send(json: json).end()
 }
 
-Kitura.addHTTPServer(onPort: 8000, with: router)
+let port = Int(ProcessInfo.processInfo.environment["PORT"] ?? "8000") ?? 8000
+
+Kitura.addHTTPServer(onPort: port, with: router)
 Kitura.run()
