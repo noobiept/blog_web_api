@@ -32,26 +32,44 @@ if let urlString = redisUrl {
 }
 
 
+func initValues() {
+    redis.set("test", value: "value22") {
+        (result: Bool, redisError: NSError?) in
+
+        if let error = redisError {
+            print(error)
+        }
+    }
+}
+
+
 let redis = Redis()
 redis.connect(host: redisHost, port: redisPort) {
     redisError in
 
-    redis.auth(redisPassword) {
-        redisError in
+    if !redisPassword.isEmpty {
+        redis.auth(redisPassword) {
+            redisError in
 
+            if let error = redisError {
+                print(error)
+                exit(1)
+            }
+
+            else {
+                initValues()
+            }
+        }
+    }
+
+    else {
         if let error = redisError {
             print(error)
             exit(1)
         }
 
         else {
-            redis.set("test", value: "value22") {
-                (result: Bool, redisError: NSError?) in
-
-                if let error = redisError {
-                    print(error)
-                }
-            }
+            initValues()
         }
     }
 }
