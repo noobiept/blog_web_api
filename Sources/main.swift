@@ -14,13 +14,15 @@ let redisUrl = ProcessInfo.processInfo.environment["REDIS_URL"]
 
 var redisHost = "localhost"
 var redisPort: Int32 = 6379
+var redisPassword = ""
 
 if let urlString = redisUrl {
     let url = URL(string: urlString)
 
     if let url = url {
-        redisHost = "\(url.scheme!)://\(url.user!):\(url.password!)@\(url.host!)"
+        redisHost = url.host!
         redisPort = Int32(url.port!)
+        redisPassword = url.password!
     }
 
     else {
@@ -34,17 +36,21 @@ let redis = Redis()
 redis.connect(host: redisHost, port: redisPort) {
     redisError in
 
-    if let error = redisError {
-        print(error)
-        exit(1)
-    }
+    redis.auth(redisPassword) {
+        redisError in
 
-    else {
-        redis.set("test", value: "value22") {
-            (result: Bool, redisError: NSError?) in
+        if let error = redisError {
+            print(error)
+            exit(1)
+        }
 
-            if let error = redisError {
-                print(error)
+        else {
+            redis.set("test", value: "value22") {
+                (result: Bool, redisError: NSError?) in
+
+                if let error = redisError {
+                    print(error)
+                }
             }
         }
     }
