@@ -1,5 +1,6 @@
 import Kitura
 import HeliumLogger
+import LoggerAPI
 import SwiftyJSON
 import Foundation
 import SwiftRedis
@@ -7,13 +8,35 @@ import SwiftRedis
 
 HeliumLogger.use()
 
+    // environment variables
+let serverPort = Int(ProcessInfo.processInfo.environment["PORT"] ?? "8000") ?? 8000
+let redisUrl = ProcessInfo.processInfo.environment["REDIS_URL"]
+
+var redisHost = "localhost"
+var redisPort: Int32 = 6379
+
+if let urlString = redisUrl {
+    let url = URL(string: urlString)
+
+    if let url = url {
+        redisHost = "\(url.scheme)://\(url.user):\(url.password)@\(url.host)"
+        redisPort = Int32(url.port!)
+    }
+
+    else {
+        Log.error("Invalid redis URL.")
+        exit(1)
+    }
+}
+
 
 let redis = Redis()
-redis.connect(host: "localhost", port: 6379) {
+redis.connect(host: redisHost, port: redisPort) {
     redisError in
 
     if let error = redisError {
         print(error)
+        exit(1)
     }
 
     else {
@@ -56,7 +79,6 @@ router.get("/") {
     }
 }
 
-let port = Int(ProcessInfo.processInfo.environment["PORT"] ?? "8000") ?? 8000
 
-Kitura.addHTTPServer(onPort: port, with: router)
+Kitura.addHTTPServer(onPort: serverPort, with: router)
 Kitura.run()
