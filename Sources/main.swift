@@ -19,7 +19,7 @@ if let urlString = redisUrl {
     let url = URL(string: urlString)
 
     if let url = url {
-        redisHost = "\(url.scheme)://\(url.user):\(url.password)@\(url.host)"
+        redisHost = "\(url.scheme!)://\(url.user!):\(url.password!)@\(url.host!)"
         redisPort = Int32(url.port!)
     }
 
