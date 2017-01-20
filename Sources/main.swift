@@ -3,82 +3,14 @@ import HeliumLogger
 import LoggerAPI
 import SwiftyJSON
 import Foundation
-import Redbird
 import Cryptor
 
 
 HeliumLogger.use()
 
 
-func configRedis() -> Redbird {
-    let redisUrl = ProcessInfo.processInfo.environment["REDIS_URL"]
+let DB = Database()
 
-    var redisHost = "localhost"
-    var redisPort: UInt16 = 6379
-    var redisPassword: String?
-
-    if let urlString = redisUrl {
-        let url = URL(string: urlString)
-
-        if let url = url {
-            redisHost = url.host!
-            redisPort = UInt16( url.port! )
-            redisPassword = url.password!
-        }
-
-        else {
-            Log.error("Invalid redis URL.")
-            exit(1)
-        }
-    }
-
-    var redisClient: Redbird
-
-    do {
-        let config = RedbirdConfig(address: redisHost, port: redisPort, password: redisPassword)
-        redisClient = try Redbird(config: config)    
-    }
-    
-    catch {
-        print("Redis error: \(error)")
-        exit(1)
-    }
-
-    return redisClient
-}
-
-
-let REDIS = configRedis()
-
-
-func initValues() {
-    _ = try? REDIS.command("SET", params: ["test", "value22"]).toString() 
-}
-
-initValues()
-
-
-func userExists( name: String ) -> Bool {
-    let isMember = try? REDIS.command("SISMEMBER", params: ["users", name]).toInt()
-
-    if isMember == 1 {
-        return true
-    }
-
-    return false
-}
-
-
-func addUser(name: String, password: String, salt: String) -> Bool {
-    let added1 = try? REDIS.command("SADD", params: ["users", name]).toInt()
-    let added2 = try? REDIS.command("HMSET", params: ["user_\(name)", "password", password, "salt", salt]).toString()
-
-    if added1 == 1 && added2 == "OK" {
-        return true
-    }
-
-    return false
-}
 
 
 func getPasswordHash(string: String, salt: String) -> String {
@@ -102,11 +34,8 @@ let router = Router()
 
 router.get("/") {
     request, response, next in
-
-    let testValue = try REDIS.command("GET", params: ["test"]).toString()
-        
+       
     var result = [String: Any]()
-    result["test"] = testValue
     let json = JSON( result )
 
     try response.status(.OK).send(json: json).end()
@@ -149,7 +78,7 @@ router.post("/user/create") {
         return 
     }
 
-    if userExists( name: username ) {
+    if DB.userExists( name: username ) {
         try badRequest( message: "Invalid 'username' (already exists).", response: response )
         return
     }
@@ -164,7 +93,7 @@ router.post("/user/create") {
     let passwordHash = getPasswordHash(string: password, salt: saltString)
 
         //save to database
-    let added = addUser(name: username, password: passwordHash, salt: saltString)
+    let added = DB.addUser(name: username, password: passwordHash, salt: saltString)
 
     var result = [String: Any]()
     result["success"] = true
