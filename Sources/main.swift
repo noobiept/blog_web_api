@@ -3,76 +3,58 @@ import HeliumLogger
 import LoggerAPI
 import SwiftyJSON
 import Foundation
-import SwiftRedis
+import Redbird
 
 
 HeliumLogger.use()
 
-    // environment variables
-let serverPort = Int(ProcessInfo.processInfo.environment["PORT"] ?? "8000") ?? 8000
-let redisUrl = ProcessInfo.processInfo.environment["REDIS_URL"]
 
-var redisHost = "localhost"
-var redisPort: Int32 = 6379
-var redisPassword = ""
+func configRedis() -> Redbird {
+    let redisUrl = ProcessInfo.processInfo.environment["REDIS_URL"]
 
-if let urlString = redisUrl {
-    let url = URL(string: urlString)
+    var redisHost = "localhost"
+    var redisPort: UInt16 = 6379
+    var redisPassword: String?
 
-    if let url = url {
-        redisHost = url.host!
-        redisPort = Int32(url.port!)
-        redisPassword = url.password!
-    }
+    if let urlString = redisUrl {
+        let url = URL(string: urlString)
 
-    else {
-        Log.error("Invalid redis URL.")
-        exit(1)
-    }
-}
-
-
-func initValues() {
-    redis.set("test", value: "value22") {
-        (result: Bool, redisError: NSError?) in
-
-        if let error = redisError {
-            print(error)
-        }
-    }
-}
-
-
-let redis = Redis()
-redis.connect(host: redisHost, port: redisPort) {
-    redisError in
-
-    if !redisPassword.isEmpty {
-        redis.auth(redisPassword) {
-            redisError in
-
-            if let error = redisError {
-                print(error)
-                exit(1)
-            }
-
-            else {
-                initValues()
-            }
-        }
-    }
-
-    else {
-        if let error = redisError {
-            print(error)
-            exit(1)
+        if let url = url {
+            redisHost = url.host!
+            redisPort = UInt16( url.port! )
+            redisPassword = url.password!
         }
 
         else {
-            initValues()
+            Log.error("Invalid redis URL.")
+            exit(1)
         }
     }
+
+    var redisClient: Redbird
+
+    do {
+        let config = RedbirdConfig(address: redisHost, port: redisPort, password: redisPassword)
+        redisClient = try Redbird(config: config)    
+    }
+    
+    catch {
+        print("Redis error: \(error)")
+        exit(1)
+    }
+
+    return redisClient
 }
+
+
+let REDIS = configRedis()
+
+
+func initValues() {
+    _ = try? REDIS.command("SET", params: ["test", "value22"]).toString() 
+}
+
+initValues()
 
 
 let router = Router()
@@ -80,29 +62,18 @@ let router = Router()
 router.get("/") {
     request, response, next in
 
-    redis.get("test") {
-        (string: RedisString?, redisError: NSError?) in
+    let testValue = try REDIS.command("GET", params: ["test"]).toString()
+        
+    var result = [String: Any]()
+    result["test"] = testValue
+    let json = JSON( result )
 
-        if let error = redisError {
-            print(error)
-        
-        }
-        
-        else if let string = string?.asString {
-            do {
-                var result = [String: Any]()
-                result["test"] = string
-                let json = JSON( result )
-            
-                try response.status(.OK).send(json: json).end()
-            }
-            catch {
-                next()
-            }
-        }  
-    }
+    try response.status(.OK).send(json: json).end()
 }
 
+
+    // configure the server
+let serverPort = Int(ProcessInfo.processInfo.environment["PORT"] ?? "8000") ?? 8000
 
 Kitura.addHTTPServer(onPort: serverPort, with: router)
 Kitura.run()
