@@ -34,7 +34,7 @@ class Database {
         }
         
         catch {
-            print("Redis error: \(error)")
+            Log.error("Redis error: \(error)")
             exit(1)
         }
     }

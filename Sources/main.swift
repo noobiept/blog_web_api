@@ -7,10 +7,7 @@ import Cryptor
 
 
 HeliumLogger.use()
-
-
 let DB = Database()
-
 
 
 func getPasswordHash(string: String, salt: String) -> String {
@@ -29,7 +26,47 @@ func badRequest(message: String, response: RouterResponse) throws {
 }
 
 
+/**
+ * Make sure we received an 'username' and a 'password'.
+ */
+func getUserParameters(request: RouterRequest, response: RouterResponse) throws -> (String, String)? {
+    guard let body = request.body else { 
+        try badRequest( message: "No body in request.", response: response )
+        return nil
+    }
+    
+    guard case .urlEncoded(let values) = body else { 
+        try badRequest( message: "Arguments not properly url encoded.", response: response )
+        return nil
+    }
+
+        // check if 'username' and 'password' exist
+    guard let username = values["username"] else { 
+        try badRequest( message: "Missing 'username' argument.", response: response )
+        return nil
+    }
+
+    guard let password = values["password"] else { 
+        try badRequest( message: "Missing 'password' argument.", response: response )
+        return nil
+    }
+
+    if username.characters.count < 3 || username.characters.count > 20 {
+        try badRequest( message: "'username' needs to be between 3 an 20 characters.", response: response )
+        return nil
+    }
+
+    if password.characters.count < 6 || password.characters.count > 20 {
+        try badRequest( message: "'password' needs to be between 6 and 20 characters.", response: response )
+        return nil
+    }
+
+    return (username, password)
+}
+
+
 let router = Router()
+router.all(middleware: BodyParser())
 
 
 router.get("/") {
@@ -42,40 +79,12 @@ router.get("/") {
 }
 
 
-router.post("/user/create", middleware: BodyParser())
 router.post("/user/create") {
     request, response, next in
     defer { next() }
 
-    guard let body = request.body else { 
-        try badRequest( message: "No body in request.", response: response )
-        return 
-    }
-    
-    guard case .urlEncoded(let values) = body else { 
-        try badRequest( message: "Arguments not properly url encoded.", response: response )
-        return 
-    }
-
-        // check if 'username' and 'password' exist
-    guard let username = values["username"] else { 
-        try badRequest( message: "Missing 'username' argument.", response: response )
-        return 
-    }
-
-    guard let password = values["password"] else { 
-        try badRequest( message: "Missing 'password' argument.", response: response )
-        return 
-    }
-
-    if username.characters.count < 3 || username.characters.count > 20 {
-        try badRequest( message: "'username' needs to be between 3 an 20 characters.", response: response )
-        return 
-    }
-
-    if password.characters.count < 6 || password.characters.count > 20 {
-        try badRequest( message: "'password' needs to be between 6 and 20 characters.", response: response )
-        return 
+    guard let (username, password) = try getUserParameters(request: request, response: response) else {
+        return
     }
 
     if DB.userExists( name: username ) {
