@@ -2,6 +2,12 @@
 
 [http://blog-web-api.herokuapp.com/](http://blog-web-api.herokuapp.com/)
 
+# Commands #
+
+| Command | Description |
+|---------|-------------|
+| curl -d "username=aaa&password=bbbbbb" http://localhost:8000/user/create | Create User |
+
 # Dependencies #
 
 - [Kitura](http://www.kitura.io/)
