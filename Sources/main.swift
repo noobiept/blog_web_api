@@ -87,7 +87,7 @@ router.post("/user/create") {
         return
     }
 
-    if DB.userExists( name: username ) {
+    guard DB.getUser(name: username) == nil else {
         try badRequest( message: "Invalid 'username' (already exists).", response: response )
         return
     }
@@ -121,31 +121,27 @@ router.post("/user/login") {
         return
     }
 
-    if !DB.userExists(name: username) {
+    guard let user = DB.getUser(name: username) else {
         try badRequest(message: "Invalid 'username' (doesn't exist).", response: response)
         return
     }
 
-    let user = DB.getUser(name: username)
+    let testPassword = getPasswordHash(string: password, salt: user["salt"]!)
 
-    if let user = user {
-        let testPassword = getPasswordHash(string: password, salt: user["salt"]!)
+    if user["password"]! == testPassword {
+        
+            // make a new token for the user
+        let token = UUID().uuidString
 
-        if user["password"]! == testPassword {
-            
-                // make a new token for the user
-            let token = UUID().uuidString
+        DB.saveUserToken(username: username, token: token)
 
-            DB.saveUserToken(username: username, token: token)
+            // send the token back to the user
+        var result = [String: Any]()
+        result["success"] = true
+        result["token"] = token
 
-                // send the token back to the user
-            var result = [String: Any]()
-            result["success"] = true
-            result["token"] = token
-
-            let json = JSON( result )
-            try response.status(.OK).send(json: json).end()
-        }
+        let json = JSON( result )
+        try response.status(.OK).send(json: json).end()
     }
 }
 

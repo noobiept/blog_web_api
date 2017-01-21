@@ -40,22 +40,10 @@ class Database {
     }
 
 
-    func userExists( name: String ) -> Bool {
-        let isMember = try? self.client.command("SISMEMBER", params: ["users", name]).toInt()
-
-        if isMember == 1 {
-            return true
-        }
-
-        return false
-    }
-
-
     func addUser(name: String, password: String, salt: String) -> Bool {
-        let added1 = try? self.client.command("SADD", params: ["users", name]).toInt()
-        let added2 = try? self.client.command("HMSET", params: ["user_\(name)", "password", password, "salt", salt]).toString()
+        let added = try? self.client.command("HMSET", params: ["user_\(name)", "password", password, "salt", salt]).toString()
 
-        if added1 == 1 && added2 == "OK" {
+        if added == "OK" {
             return true
         }
 
@@ -65,25 +53,28 @@ class Database {
 
     func getUser(name: String) -> [String: String]? {
             // returns an array instead of a hash, where every field is followed by its value
-        let info = try? self.client.command("HGETALL", params: ["user_\(name)"]).toArray()
+        let userInfo = try? self.client.command("HGETALL", params: ["user_\(name)"]).toArray()
 
-        if let info = info {
-
-            var user = [String: String]()
-            var a = 0
-
-            while (a < info.count) {
-                let field = try! info[ a ].toString()
-                let value = try! info[ a + 1 ].toString()
-
-                user[ field ] = value
-                a += 2
-            }
-        
-            return user
+        guard let info = userInfo else {
+            return nil
         }
 
-        return nil
+        guard info.count > 0 else {
+            return nil
+        }
+
+        var user = [String: String]()
+        var a = 0
+
+        while (a < info.count) {
+            let field = try! info[ a ].toString()
+            let value = try! info[ a + 1 ].toString()
+
+            user[ field ] = value
+            a += 2
+        }
+    
+        return user
     }
 
 
