@@ -94,7 +94,7 @@ router.post("/user/create") {
 
         // create the user
     guard let salt = try? Random.generate(byteCount: 64) else { 
-        Log.error("Fail to create the 'salt'.")
+        Log.error("Failed to create the 'salt'.")
         return 
     } 
     
@@ -128,21 +128,23 @@ router.post("/user/login") {
 
     let testPassword = getPasswordHash(string: password, salt: user["salt"]!)
 
-    if user["password"]! == testPassword {
-        
-            // make a new token for the user
-        let token = UUID().uuidString
-
-        DB.saveUserToken(username: username, token: token)
-
-            // send the token back to the user
-        var result = [String: Any]()
-        result["success"] = true
-        result["token"] = token
-
-        let json = JSON( result )
-        try response.status(.OK).send(json: json).end()
+    guard user["password"]! == testPassword else {
+        try badRequest(message: "Invalid password.", response: response)
+        return
     }
+    
+        // make a new token for the user
+    let token = UUID().uuidString
+
+    DB.saveUserToken(username: username, token: token)
+
+        // send the token back to the user
+    var result = [String: Any]()
+    result["success"] = true
+    result["token"] = token
+
+    let json = JSON( result )
+    try response.status(.OK).send(json: json).end()
 }
 
 
