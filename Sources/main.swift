@@ -113,6 +113,43 @@ router.post("/user/create") {
 }
 
 
+router.post("/user/login") {
+    request, response, next in
+    defer { next() }
+
+    guard let (username, password) = try getUserParameters(request: request, response: response) else {
+        return
+    }
+
+    if !DB.userExists(name: username) {
+        try badRequest(message: "Invalid 'username' (doesn't exist).", response: response)
+        return
+    }
+
+    let user = DB.getUser(name: username)
+
+    if let user = user {
+        let testPassword = getPasswordHash(string: password, salt: user["salt"]!)
+
+        if user["password"]! == testPassword {
+            
+                // make a new token for the user
+            let token = UUID().uuidString
+
+            DB.saveUserToken(username: username, token: token)
+
+                // send the token back to the user
+            var result = [String: Any]()
+            result["success"] = true
+            result["token"] = token
+
+            let json = JSON( result )
+            try response.status(.OK).send(json: json).end()
+        }
+    }
+}
+
+
     // configure the server
 let serverPort = Int(ProcessInfo.processInfo.environment["PORT"] ?? "8000") ?? 8000
 

@@ -61,4 +61,37 @@ class Database {
 
         return false
     }
+
+
+    func getUser(name: String) -> [String: String]? {
+            // returns an array instead of a hash, where every field is followed by its value
+        let info = try? self.client.command("HGETALL", params: ["user_\(name)"]).toArray()
+
+        if let info = info {
+
+            var user = [String: String]()
+            var a = 0
+
+            while (a < info.count) {
+                let field = try! info[ a ].toString()
+                let value = try! info[ a + 1 ].toString()
+
+                user[ field ] = value
+                a += 2
+            }
+        
+            return user
+        }
+
+        return nil
+    }
+
+
+    func saveUserToken(username: String, token: String) {
+        let oneDaySeconds = 86_400  // expire the token after 1 day
+        let key = "token_\(token)"
+
+        _ = try? self.client.command("SET", params: [key, username])
+        _ = try? self.client.command("EXPIRE", params: [key, String( oneDaySeconds )])
+    }
 }
