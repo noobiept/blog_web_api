@@ -26,10 +26,8 @@ func badRequest(message: String, response: RouterResponse) throws {
 }
 
 
-/**
- * Make sure we received an 'username' and a 'password'.
- */
-func getUserParameters(request: RouterRequest, response: RouterResponse) throws -> (String, String)? {
+
+func getPostParameters(keys: [String], request: RouterRequest, response: RouterResponse) throws -> [String: String]? {
     guard let body = request.body else { 
         try badRequest( message: "No body in request.", response: response )
         return nil
@@ -40,16 +38,31 @@ func getUserParameters(request: RouterRequest, response: RouterResponse) throws 
         return nil
     }
 
-        // check if 'username' and 'password' exist
-    guard let username = values["username"] else { 
-        try badRequest( message: "Missing 'username' argument.", response: response )
+    var params = [String: String]()
+
+    for key in keys {
+        guard let param = values[ key ] else {
+            try badRequest(message: "Missing '\(key)' argument.", response: response)
+            return nil
+        }
+
+        params[ key ] = param
+    }
+
+    return params
+}
+
+
+/**
+ * Make sure we received an 'username' and a 'password'.
+ */
+func getUserParameters(request: RouterRequest, response: RouterResponse) throws -> (String, String)? {
+    guard let params = try getPostParameters(keys: ["username", "password"], request: request, response: response) else {
         return nil
     }
 
-    guard let password = values["password"] else { 
-        try badRequest( message: "Missing 'password' argument.", response: response )
-        return nil
-    }
+    let username = params["username"]!
+    let password = params["password"]!
 
     if username.characters.count < 3 || username.characters.count > 20 {
         try badRequest( message: "'username' needs to be between 3 an 20 characters.", response: response )
@@ -81,7 +94,6 @@ router.get("/") {
 
 router.post("/user/create") {
     request, response, next in
-    defer { next() }
 
     guard let (username, password) = try getUserParameters(request: request, response: response) else {
         return
@@ -115,7 +127,6 @@ router.post("/user/create") {
 
 router.post("/user/login") {
     request, response, next in
-    defer { next() }
 
     guard let (username, password) = try getUserParameters(request: request, response: response) else {
         return
@@ -150,13 +161,16 @@ router.post("/user/login") {
 
 router.post("/blog/add") {
     request, response, next in
-    defer { next() }
+
+    guard let params = try getPostParameters(keys: ["token", "title", "body"], request: request, response: response) else {
+        return
+    }
 
     let username = "asd"
-    let title = "title"
-    let body = "body"
-
-    let postId = try DB.addBlogPost(username: username, title: title, body: body)
+    let title = params["title"]!
+    let body = params["body"]!
+    
+    let postId = try DB.addBlogPost(username: username, title: title, body: body) 
 
     var result = [String: Any]()
     result["success"] = true
@@ -169,7 +183,6 @@ router.post("/blog/add") {
 
 router.get("/blog/get/:blogId") {
     request, response, next in
-    defer { next() }
 
     guard let blogId = request.parameters["blogId"] else {
         try badRequest(message: "Missing 'blogId' argument.", response: response)

@@ -113,8 +113,8 @@ class Database {
     }
 
 
-    func addBlogPost(username: String, title: String, body: String) throws -> String? {
-        let id = try self.client.command("INCR", params: ["LAST_POST_ID"]).toString()
+    func addBlogPost(username: String, title: String, body: String) throws -> Int? {
+        let id = try self.client.command("INCR", params: ["LAST_POST_ID"]).toInt()
 
         _ = try self.client.command("HMSET", params: [
                 "post_\(id)",
