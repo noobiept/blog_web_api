@@ -6,6 +6,7 @@ import LoggerAPI
 class Database {
     let client: Redbird
 
+
     init() {
         let redisUrl = ProcessInfo.processInfo.environment["REDIS_URL"]
 
@@ -30,7 +31,8 @@ class Database {
 
         do {
             let config = RedbirdConfig(address: redisHost, port: redisPort, password: redisPassword)
-            self.client = try Redbird(config: config)    
+            self.client = try Redbird(config: config)
+            try self.setupInitValues()
         }
         
         catch {
@@ -40,8 +42,17 @@ class Database {
     }
 
 
+    func setupInitValues() throws {
+        try self.client.command("SETNX", params: ["LAST_POST_ID", "-1"])
+    }
+
+
     func addUser(name: String, password: String, salt: String) -> Bool {
-        let added = try? self.client.command("HMSET", params: ["user_\(name)", "password", password, "salt", salt]).toString()
+        let added = try? self.client.command("HMSET", params: [
+                "user_\(name)", 
+                "password", password, 
+                "salt", salt
+            ]).toString()
 
         if added == "OK" {
             return true
@@ -51,30 +62,35 @@ class Database {
     }
 
 
-    func getUser(name: String) -> [String: String]? {
+    func getHash(key: String) -> [String: String]? {
             // returns an array instead of a hash, where every field is followed by its value
-        let userInfo = try? self.client.command("HGETALL", params: ["user_\(name)"]).toArray()
+        let hash = try? self.client.command("HGETALL", params: [ key ]).toArray()
 
-        guard let info = userInfo else {
+        guard let hashList = hash else {
             return nil
         }
 
-        guard info.count > 0 else {
+        guard hashList.count > 0 else {
             return nil
         }
 
-        var user = [String: String]()
+        var dict = [String: String]()
         var a = 0
 
-        while (a < info.count) {
-            let field = try! info[ a ].toString()
-            let value = try! info[ a + 1 ].toString()
+        while (a < hashList.count) {
+            let field = try! hashList[ a ].toString()
+            let value = try! hashList[ a + 1 ].toString()
 
-            user[ field ] = value
+            dict[ field ] = value
             a += 2
         }
     
-        return user
+        return dict
+    }
+
+
+    func getUser(name: String) -> [String: String]? {
+        return self.getHash(key: "user_\(name)")
     }
 
 
@@ -84,5 +100,35 @@ class Database {
 
         _ = try? self.client.command("SET", params: [key, username])
         _ = try? self.client.command("EXPIRE", params: [key, String( oneDaySeconds )])
+    }
+
+
+    /**
+     * Returns the Unix timestamp (number of seconds since 1/1/1970).
+     */
+    func getCurrentTime() throws -> String {
+        let time = try self.client.command("TIME").toArray()
+
+        return try time[ 0 ].toString()
+    }
+
+
+    func addBlogPost(username: String, title: String, body: String) throws -> String? {
+        let id = try self.client.command("INCR", params: ["LAST_POST_ID"]).toString()
+
+        _ = try self.client.command("HMSET", params: [
+                "post_\(id)",
+                "title", title,
+                "body", body,
+                "author", username,
+                "time", try getCurrentTime()
+            ])
+    
+        return id
+    }
+
+
+    func getBlogPost(id: String) -> [String: String]? {
+        return self.getHash(key: "post_\(id)")
     }
 }

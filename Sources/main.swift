@@ -148,6 +148,48 @@ router.post("/user/login") {
 }
 
 
+router.post("/blog/add") {
+    request, response, next in
+    defer { next() }
+
+    let username = "asd"
+    let title = "title"
+    let body = "body"
+
+    let postId = try DB.addBlogPost(username: username, title: title, body: body)
+
+    var result = [String: Any]()
+    result["success"] = true
+    result["post_id"] = postId
+
+    let json = JSON( result )
+    try response.status(.OK).send(json: json).end()
+}
+
+
+router.get("/blog/get/:blogId") {
+    request, response, next in
+    defer { next() }
+
+    guard let blogId = request.parameters["blogId"] else {
+        try badRequest(message: "Missing 'blogId' argument.", response: response)
+        return
+    }
+
+    guard let post = DB.getBlogPost( id: blogId ) else {
+        try badRequest(message: "Didn't find the blog post.", response: response)
+        return
+    }
+
+    var result = [String: Any]()
+    result["success"] = true
+    result["post"] = post
+
+    let json = JSON( result )
+    try response.status(.OK).send(json: json).end()
+}
+
+
     // configure the server
 let serverPort = Int(ProcessInfo.processInfo.environment["PORT"] ?? "8000") ?? 8000
 
