@@ -94,6 +94,11 @@ class Database {
     }
 
 
+    func getUserName(token: String) -> String? {
+        return try? self.client.command("GET", params: ["token_\(token)"]).toString()
+    }
+
+
     func saveUserToken(username: String, token: String) {
         let oneDaySeconds = 86_400  // expire the token after 1 day
         let key = "token_\(token)"

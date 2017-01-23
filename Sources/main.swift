@@ -166,7 +166,11 @@ router.post("/blog/add") {
         return
     }
 
-    let username = "asd"
+    guard let username = DB.getUserName(token: params["token"]!) else {
+        try badRequest(message: "Invalid 'token'.", response: response)
+        return
+    }
+    
     let title = params["title"]!
     let body = params["body"]!
     
