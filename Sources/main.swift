@@ -26,7 +26,6 @@ func badRequest(message: String, response: RouterResponse) throws {
 }
 
 
-
 func getPostParameters(keys: [String], request: RouterRequest, response: RouterResponse) throws -> [String: String]? {
     guard let body = request.body else { 
         try badRequest( message: "No body in request.", response: response )
@@ -119,8 +118,9 @@ router.post("/user/create") {
     var result = [String: Any]()
     result["success"] = true
     result["message"] = "User created."
-    let json = JSON( result )
+    result["token"] = DB.generateUserToken(username: username)
 
+    let json = JSON( result )
     try response.status(.OK).send(json: json).end()
 }
 
@@ -143,16 +143,11 @@ router.post("/user/login") {
         try badRequest(message: "Invalid password.", response: response)
         return
     }
-    
-        // make a new token for the user
-    let token = UUID().uuidString
 
-    DB.saveUserToken(username: username, token: token)
-
-        // send the token back to the user
+        // make a new token and send it back to the user
     var result = [String: Any]()
     result["success"] = true
-    result["token"] = token
+    result["token"] = DB.generateUserToken(username: username)
 
     let json = JSON( result )
     try response.status(.OK).send(json: json).end()

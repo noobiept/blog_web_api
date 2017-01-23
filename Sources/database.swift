@@ -99,12 +99,18 @@ class Database {
     }
 
 
-    func saveUserToken(username: String, token: String) {
+    /**
+     * Generate the token to be used to authenticate a user.
+     */
+    func generateUserToken(username: String) -> String {
+        let token = UUID().uuidString
         let oneDaySeconds = 86_400  // expire the token after 1 day
         let key = "token_\(token)"
 
         _ = try? self.client.command("SET", params: [key, username])
         _ = try? self.client.command("EXPIRE", params: [key, String( oneDaySeconds )])
+
+        return token
     }
 
 

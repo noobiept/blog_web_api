@@ -6,7 +6,10 @@
 
 | Command | Description |
 |---------|-------------|
-| curl -d "username=aaa&password=bbbbbb" http://localhost:8000/user/create | Create User |
+| curl --data "username=aaa&password=bbbbbb" http://localhost:8000/user/create | Create a user. |
+| curl --data "username=aaa&password=bbbbbb" http://localhost:8000/user/login | Get an authentication token. |
+| curl --data "token=cccccc&title=title&body=body" http://localhost:8000/blog/add | Add a blog post. |
+| curl http://localhost:8000/blog/get/:blogId | Get a specific blog post. |
 
 # Dependencies #
 
