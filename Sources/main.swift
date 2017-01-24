@@ -46,8 +46,11 @@ router.post("/user/create") {
     let passwordHash = getPasswordHash(string: password, salt: saltString)
 
         //save to database
-    let added = DB.addUser(name: username, password: passwordHash, salt: saltString)
-
+    guard let added = try? DB.addUser(name: username, password: passwordHash, salt: saltString) else {
+        try badRequest(message: "Failed to create the user.", response: response)
+        return
+    }
+    
     var result = [String: Any]()
     result["success"] = true
     result["message"] = "User created."
@@ -81,6 +84,23 @@ router.post("/user/login") {
     var result = [String: Any]()
     result["success"] = true
     result["token"] = DB.generateUserToken(username: username)
+
+    let json = JSON( result )
+    try response.status(.OK).send(json: json).end()
+}
+
+
+router.get("/user/getall") {
+    request, response, next in
+
+    guard let users = try? DB.getAllUsers() else {
+        try badRequest(message: "Failed to get all the users.", response: response)
+        return
+    }
+
+    var result = [String: Any]()
+    result["success"] = true
+    result["users"] = users
 
     let json = JSON( result )
     try response.status(.OK).send(json: json).end()

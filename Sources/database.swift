@@ -47,18 +47,37 @@ class Database {
     }
 
 
-    func addUser(name: String, password: String, salt: String) -> Bool {
-        let added = try? self.client.command("HMSET", params: [
+    func addUser(name: String, password: String, salt: String) throws -> Bool {
+        let added1 = try self.client.command("HMSET", params: [
                 "user_\(name)", 
                 "password", password, 
                 "salt", salt
             ]).toString()
+        let added2 = try self.client.command("SADD", params: ["users", name]).toInt()
 
-        if added == "OK" {
+        if added1 == "OK" && added2 == 1 {
             return true
         }
 
         return false
+    }
+
+
+    func getAllUsers() throws -> [String] {
+        return try self.getAllSetMembers(key: "users")
+    }
+
+
+    func getAllSetMembers(key: String) throws -> [String] {
+        let members = try self.client.command("SMEMBERS", params: [ key ]).toArray()
+
+        var all = [String]()
+
+        for member in members {
+            all.append( try member.toString() )
+        }
+
+        return all
     }
 
 
@@ -146,14 +165,6 @@ class Database {
 
 
     func getUserPosts(username: String) throws -> [String] {
-        let members = try self.client.command("SMEMBERS", params: ["user_posts_\(username)"]).toArray()
-
-        var posts = [String]()
-
-        for member in members {
-            posts.append(try member.toString())
-        }
-
-        return posts
+        return try self.getAllSetMembers(key: "user_posts_\(username)")
     }
 }

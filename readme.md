@@ -27,10 +27,11 @@
 
 # Database Keys #
 
-| Key | Description |
-| ----|-------------|
-| LAST_POST_ID | ID of the last post (integer). |
-| user_* | User information (hash). |
-| user_posts_* | List of IDs of posts made by this user (set). |
-| token_* | Authentication token (string). |
-| post_* | Blog post information (hash). |
+| Key | Description | Data Type |
+| ----|-------------|-----------|
+| LAST_POST_ID | ID of the last post. | Integer |
+| user_* | User information. | Hash |
+| users | Set with all the usernames. | Set |
+| user_posts_* | Set of IDs of posts made by this user. | Set |
+| token_* | Authentication token. | String |
+| post_* | Blog post information. | Hash |
