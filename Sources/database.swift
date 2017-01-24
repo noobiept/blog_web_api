@@ -134,6 +134,7 @@ class Database {
                 "author", username,
                 "time", try getCurrentTime()
             ])
+        try self.client.command("SADD", params: ["user_posts_\(username)", "\(id)"])
     
         return id
     }
@@ -141,5 +142,18 @@ class Database {
 
     func getBlogPost(id: String) -> [String: String]? {
         return self.getHash(key: "post_\(id)")
+    }
+
+
+    func getUserPosts(username: String) throws -> [String] {
+        let members = try self.client.command("SMEMBERS", params: ["user_posts_\(username)"]).toArray()
+
+        var posts = [String]()
+
+        for member in members {
+            posts.append(try member.toString())
+        }
+
+        return posts
     }
 }

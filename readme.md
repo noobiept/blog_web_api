@@ -24,3 +24,13 @@
 | `redis-server` | Start the redis server. |
 | `swift build && .build/debug/blog_web_api` | Compile and run the server. |
 | `git push heroku master` | Deploy to heroku. |
+
+# Database Keys #
+
+| Key | Description |
+| ----|-------------|
+| LAST_POST_ID | ID of the last post (integer). |
+| user_* | User information (hash). |
+| user_posts_* | List of IDs of posts made by this user (set). |
+| token_* | Authentication token (string). |
+| post_* | Blog post information (hash). |

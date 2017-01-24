@@ -169,6 +169,17 @@ router.post("/blog/add") {
     let title = params["title"]!
     let body = params["body"]!
     
+    guard title.characters.count >= 5 && title.characters.count <= 100 else {
+        try badRequest(message: "'title' needs to be between 5 and 100 characters.", response: response)
+        return
+    }
+
+    guard body.characters.count >= 10 && body.characters.count <= 10_000 else {
+        try badRequest(message: "'body' needs to be between 10 and 10000 characters.", response: response)
+        return
+    }
+
+
     let postId = try DB.addBlogPost(username: username, title: title, body: body) 
 
     var result = [String: Any]()
@@ -200,6 +211,29 @@ router.get("/blog/get/:blogId") {
     let json = JSON( result )
     try response.status(.OK).send(json: json).end()
 }
+
+
+router.get("/blog/:username/getall") {
+    request, response, next in
+
+    guard let username = request.parameters["username"] else {
+        try badRequest(message: "Missing 'username' argument.", response: response)
+        return
+    }
+
+    guard let postsList = try? DB.getUserPosts(username: username) else {
+        try badRequest(message: "No posts found.", response: response)
+        return
+    }
+
+    var result = [String: Any]()
+    result["success"] = true
+    result["posts_ids"] = postsList
+
+    let json = JSON( result )
+    try response.status(.OK).send(json: json).end()
+}
+
 
 
     // configure the server
