@@ -144,12 +144,8 @@ router.post("/blog/remove") {
     
     let blogId = params["blogId"]!
     guard let post = try validateBlogPost(params["blogId"]!, response) else { return }
+    guard validateAuthor(post, username, response) else { return }
 
-        // only the author can remove the post
-    guard post["author"]! == username else {
-        try badRequest(message: "The blog posts can only be removed by its author.", response: response)
-        return
-    }
 
     guard let _ = try? DB.removePost(username: username, id: blogId) else {
         try badRequest(message: "Failed to remove the post.", response: response)
@@ -170,7 +166,19 @@ router.post("/blog/update") {
     guard let params        = try getPostParameters(["token", "title", "body", "blogId"], request, response) else { return }
     guard let username      = try validateUserName(params, response)                                         else { return }
     guard let (title, body) = try validateTitleBody(params, response)                                        else { return }
+    guard let post = try validateBlogPost(params["blogId"]!, response) else { return }
+    guard try validateAuthor(post, username, response) else { return }
 
+    guard let _ = try? DB.updateBlogPost(username: username, title: title, body: body) else {
+        try badRequest(message: "Failed to update the post.", response: response)
+        return
+    }
+
+    var result = [String: Any]()
+    result["success"] = true
+    
+    let json = JSON( result )
+    try response.status(.OK).send(json: json).end()
 }
 
 

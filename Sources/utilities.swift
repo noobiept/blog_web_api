@@ -120,3 +120,16 @@ func validateBlogId(_ request: RouterRequest, _ response: RouterResponse) throws
 
     return blogId
 }
+
+
+/**
+ * See if the username is the same as the post author.
+ */
+func validateAuthor(_ post: [String: String], _ username, _ response: RouterResponse) throws -> Bool {
+    guard post["author"]! == username else {
+        try badRequest(message: "The blog posts state can only be changed by its author.", response: response)
+        return false
+    }
+
+    return true
+}

@@ -157,6 +157,16 @@ class Database {
     
         return id
     }
+    
+
+    func updateBlogPost(username: String, title: String, body: String) throws {
+        try self.client.command("HMSET", params: [
+            "post_\(id)",
+            "title", title,
+            "body", body,
+            "author", username
+        ])
+    }
 
 
     func getBlogPost(id: String) -> [String: String]? {
