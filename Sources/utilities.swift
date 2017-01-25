@@ -1,4 +1,5 @@
 import Kitura
+import KituraNet
 import Cryptor
 import SwiftyJSON
 
@@ -9,24 +10,24 @@ func getPasswordHash(string: String, salt: String) -> String {
 }
 
 
-func badRequest(message: String, response: RouterResponse) throws {
+func unsuccessfulRequest(_ message: String, _ response: RouterResponse, _ code: HTTPStatusCode) throws {
     var result = [String: Any]()
     result["success"] = false
     result["message"] = message
 
     let json = JSON( result )
-    try response.status( .badRequest ).send( json: json ).end()
+    try response.status( code ).send( json: json ).end()
 }
 
 
 func getPostParameters(_ keys: [String], _ request: RouterRequest, _ response: RouterResponse) throws -> [String: String]? {
     guard let body = request.body else { 
-        try badRequest( message: "No body in request.", response: response )
+        try unsuccessfulRequest("No body in request.", response, .badRequest)
         return nil
     }
     
     guard case .urlEncoded(let values) = body else { 
-        try badRequest( message: "Arguments not properly url encoded.", response: response )
+        try unsuccessfulRequest("Arguments not properly url encoded.", response, .badRequest)
         return nil
     }
 
@@ -34,7 +35,7 @@ func getPostParameters(_ keys: [String], _ request: RouterRequest, _ response: R
 
     for key in keys {
         guard let param = values[ key ] else {
-            try badRequest(message: "Missing '\(key)' argument.", response: response)
+            try unsuccessfulRequest("Missing '\(key)' argument.", response, .badRequest)
             return nil
         }
 
@@ -47,7 +48,7 @@ func getPostParameters(_ keys: [String], _ request: RouterRequest, _ response: R
 
 func validateUserName(_ username: String, _ response: RouterResponse) throws -> String? {
     if username.characters.count < 3 || username.characters.count > 20 {
-        try badRequest( message: "'username' needs to be between 3 an 20 characters.", response: response )
+        try unsuccessfulRequest("'username' needs to be between 3 an 20 characters.", response, .badRequest)
         return nil
     }
 
@@ -57,7 +58,7 @@ func validateUserName(_ username: String, _ response: RouterResponse) throws -> 
 
 func validatePassword(_ password: String, _ response: RouterResponse) throws -> String? {
     if password.characters.count < 6 || password.characters.count > 20 {
-        try badRequest( message: "'password' needs to be between 6 and 20 characters.", response: response )
+        try unsuccessfulRequest("'password' needs to be between 6 and 20 characters.", response, .badRequest)
         return nil
     }
 
@@ -67,7 +68,7 @@ func validatePassword(_ password: String, _ response: RouterResponse) throws -> 
 
 func validateToken(_ params: [String: String], _ response: RouterResponse) throws -> String? {
     guard let username = try? DB.getUserName(token: params["token"]!) else {
-        try badRequest(message: "Invalid authentication 'token'.", response: response)
+        try unsuccessfulRequest("Invalid authentication 'token'.", response, .notFound)
         return nil
     }
 
@@ -84,12 +85,12 @@ func validateTitleBody(_ params: [String: String], _ response: RouterResponse) t
     let body = params["body"]!
     
     guard title.characters.count >= 5 && title.characters.count <= 100 else {
-        try badRequest(message: "'title' needs to be between 5 and 100 characters.", response: response)
+        try unsuccessfulRequest("'title' needs to be between 5 and 100 characters.", response, .badRequest)
         return nil
     }
 
     guard body.characters.count >= 10 && body.characters.count <= 10_000 else {
-        try badRequest(message: "'body' needs to be between 10 and 10000 characters.", response: response)
+        try unsuccessfulRequest("'body' needs to be between 10 and 10000 characters.", response, .badRequest)
         return nil
     }
 
@@ -99,7 +100,7 @@ func validateTitleBody(_ params: [String: String], _ response: RouterResponse) t
 
 func validateBlogPost(_ blogId: String, _ response: RouterResponse) throws -> [String: String]? {
     guard let post = DB.getBlogPost(id: blogId) else {
-        try badRequest(message: "Didn't find the blog post.", response: response)
+        try unsuccessfulRequest("Didn't find the blog post.", response, .notFound)
         return nil
     }
 
@@ -109,7 +110,7 @@ func validateBlogPost(_ blogId: String, _ response: RouterResponse) throws -> [S
 
 func validateBlogId(_ request: RouterRequest, _ response: RouterResponse) throws -> String? {
     guard let blogId = request.parameters["blogId"] else {
-        try badRequest(message: "Missing 'blogId' argument.", response: response)
+        try unsuccessfulRequest("Missing 'blogId' argument.", response, .badRequest)
         return nil
     }
 
@@ -122,7 +123,7 @@ func validateBlogId(_ request: RouterRequest, _ response: RouterResponse) throws
  */
 func validateAuthor(_ post: [String: String], _ username: String, _ response: RouterResponse) throws -> Bool {
     guard post["author"]! == username else {
-        try badRequest(message: "The blog posts state can only be changed by its author.", response: response)
+        try unsuccessfulRequest("The blog posts state can only be changed by its author.", response, .forbidden)
         return false
     }
 
@@ -135,14 +136,14 @@ func validateAuthor(_ post: [String: String], _ username: String, _ response: Ro
  */
 func authenticateUser(_ username: String, _ password: String, _ response: RouterResponse) throws -> Bool {
     guard let user = DB.getUser(name: username) else {
-        try badRequest(message: "Invalid 'username' (doesn't exist).", response: response)
+        try unsuccessfulRequest("Invalid 'username' (doesn't exist).", response, .notFound)
         return false
     }
 
     let testPassword = getPasswordHash(string: password, salt: user["salt"]!)
 
     guard user["password"]! == testPassword else {
-        try badRequest(message: "Invalid password.", response: response)
+        try unsuccessfulRequest("Invalid password.", response, .badRequest)
         return false
     }
 

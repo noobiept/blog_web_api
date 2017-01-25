@@ -61,8 +61,8 @@ class Database {
                 "user_\(name)", 
                 "password", passwordHash, 
                 "salt", saltString
-            ]).toString()
-        try self.client.command("SADD", params: ["users", name]).toInt()
+            ])
+        try self.client.command("SADD", params: ["users", name])
 
         return true
     }

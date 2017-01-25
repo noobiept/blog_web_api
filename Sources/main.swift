@@ -31,13 +31,13 @@ router.post("/user/create") {
     guard let password = try validatePassword(params["password"]!, response)                else { return }
 
     guard DB.getUser(name: username) == nil else {
-        try badRequest( message: "Invalid 'username' (already exists).", response: response )
+        try unsuccessfulRequest("Invalid 'username' (already exists).", response, .forbidden)
         return
     }
 
         // create the user
     guard let added = try? DB.addUser(name: username, password: password) else {
-        try badRequest(message: "Failed to create the user.", response: response)
+        try unsuccessfulRequest("Failed to create the user.", response, .internalServerError)
         return
     }
     
@@ -79,7 +79,7 @@ router.post("/user/change_password") {
     guard                   try authenticateUser(username, password, response) else     { return }
 
     guard try DB.addUser(name: username, password: newPassword) else {
-        try badRequest(message: "Failed to change the password.", response: response)
+        try unsuccessfulRequest("Failed to change the password.", response, .internalServerError)
         return
     }
 
@@ -95,7 +95,7 @@ router.get("/user/getall") {
     request, response, next in
 
     guard let users = try? DB.getAllUsers() else {
-        try badRequest(message: "Failed to get all the users.", response: response)
+        try unsuccessfulRequest("Failed to get all the users.", response, .notFound)
         return
     }
 
@@ -153,7 +153,7 @@ router.post("/blog/remove") {
 
 
     guard let _ = try? DB.removePost(username: username, id: blogId) else {
-        try badRequest(message: "Failed to remove the post.", response: response)
+        try unsuccessfulRequest("Failed to remove the post.", response, .internalServerError)
         return
     }
 
@@ -175,7 +175,7 @@ router.post("/blog/update") {
     guard                     try validateAuthor(post, username, response)      else { return }
 
     guard let _ = try? DB.updateBlogPost(id: params["blogId"]!, title: title, body: body) else {
-        try badRequest(message: "Failed to update the post.", response: response)
+        try unsuccessfulRequest("Failed to update the post.", response, .internalServerError)
         return
     }
 
@@ -191,12 +191,12 @@ router.get("/blog/:username/getall") {
     request, response, next in
 
     guard let username = request.parameters["username"] else {
-        try badRequest(message: "Missing 'username' argument.", response: response)
+        try unsuccessfulRequest("Missing 'username' argument.", response, .badRequest)
         return
     }
 
     guard let postsList = try? DB.getUserPosts(username: username) else {
-        try badRequest(message: "No posts found.", response: response)
+        try unsuccessfulRequest("No posts found.", response, .notFound)
         return
     }
 
