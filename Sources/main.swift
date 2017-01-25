@@ -209,6 +209,25 @@ router.get("/blog/:username/getall") {
 }
 
 
+router.get("/blog/random") {
+    request, response, next in
+
+    guard let random = try? DB.getRandomPostId() else {
+        try unsuccessfulRequest("Couldn't find any post.", response, .notFound)
+        return
+    }
+
+    guard let post = try? validateBlogPost(random, response) else { return }
+
+    var result = [String: Any]()
+    result["success"] = true
+    result["post"] = post
+
+    let json = JSON( result )
+    try response.status(.OK).send(json: json).end()
+}
+
+
     // configure the server
 let serverPort = Int(ProcessInfo.processInfo.environment["PORT"] ?? "8000") ?? 8000
 

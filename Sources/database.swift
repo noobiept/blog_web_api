@@ -159,7 +159,8 @@ class Database {
                 "time", try getCurrentTime()
             ])
         try self.client.command("SADD", params: ["user_posts_\(username)", "\(id)"])
-    
+        try self.client.command("SADD", params: ["posts", "\(id)"])
+
         return id
     }
     
@@ -185,6 +186,12 @@ class Database {
 
     func removePost(username: String, id: String) throws {
         try self.client.command("SREM", params: ["user_posts_\(username)", id])
+        try self.client.command("SREM", params: ["posts", id])
         try self.client.command("DEL", params: ["post_\(id)"])
+    }
+
+
+    func getRandomPostId() throws -> String {
+        return try self.client.command("SRANDMEMBER", params: ["posts"]).toString()
     }
 }

@@ -35,3 +35,4 @@
 | user_posts_* | Set of IDs of posts made by this user. | Set |
 | token_* | Authentication token. | String |
 | post_* | Blog post information. | Hash |
+| posts | All post IDs. | Set |
