@@ -1,6 +1,7 @@
 import Foundation
 import Redbird
 import LoggerAPI
+import Cryptor
 
 
 class Database {
@@ -47,19 +48,23 @@ class Database {
     }
 
 
-    func addUser(name: String, password: String, salt: String) throws -> Bool {
-        let added1 = try self.client.command("HMSET", params: [
-                "user_\(name)", 
-                "password", password, 
-                "salt", salt
-            ]).toString()
-        let added2 = try self.client.command("SADD", params: ["users", name]).toInt()
-
-        if added1 == "OK" && added2 == 1 {
-            return true
+    func addUser(name: String, password: String) throws -> Bool {
+        guard let salt = try? Random.generate(byteCount: 64) else { 
+            Log.error("Failed to create the 'salt'.")
+            return false
         }
+        
+        let saltString = CryptoUtils.hexString(from: salt)
+        let passwordHash = getPasswordHash(string: password, salt: saltString)
 
-        return false
+        try self.client.command("HMSET", params: [
+                "user_\(name)", 
+                "password", passwordHash, 
+                "salt", saltString
+            ]).toString()
+        try self.client.command("SADD", params: ["users", name]).toInt()
+
+        return true
     }
 
 

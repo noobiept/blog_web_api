@@ -3,7 +3,6 @@ import HeliumLogger
 import LoggerAPI
 import SwiftyJSON
 import Foundation
-import Cryptor
 
 
 HeliumLogger.use()
@@ -37,16 +36,7 @@ router.post("/user/create") {
     }
 
         // create the user
-    guard let salt = try? Random.generate(byteCount: 64) else { 
-        Log.error("Failed to create the 'salt'.")
-        return 
-    } 
-    
-    let saltString = CryptoUtils.hexString(from: salt)
-    let passwordHash = getPasswordHash(string: password, salt: saltString)
-
-        //save to database
-    guard let added = try? DB.addUser(name: username, password: passwordHash, salt: saltString) else {
+    guard let added = try? DB.addUser(name: username, password: password) else {
         try badRequest(message: "Failed to create the user.", response: response)
         return
     }
@@ -88,7 +78,16 @@ router.post("/user/change_password") {
     guard let newPassword = try validatePassword(params["newPassword"]!, response) else { return }
     guard                   try authenticateUser(username, password, response) else     { return }
 
+    guard try DB.addUser(name: username, password: newPassword) else {
+        try badRequest(message: "Failed to change the password.", response: response)
+        return
+    }
 
+    var result = [String: Any]()
+    result["success"] = true
+
+    let json = JSON( result )
+    try response.status(.OK).send(json: json).end()
 }
 
 
