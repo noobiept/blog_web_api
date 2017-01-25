@@ -167,4 +167,10 @@ class Database {
     func getUserPosts(username: String) throws -> [String] {
         return try self.getAllSetMembers(key: "user_posts_\(username)")
     }
+
+
+    func removePost(username: String, id: String) throws {
+        try self.client.command("SREM", params: ["user_posts_\(username)", id])
+        try self.client.command("DEL", params: ["post_\(id)"])
+    }
 }

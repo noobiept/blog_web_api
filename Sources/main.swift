@@ -166,6 +166,49 @@ router.get("/blog/get/:blogId") {
 }
 
 
+router.post("/blog/remove") {
+    request, response, next in
+
+    guard let params = try getPostParameters(keys: ["token", "blogId"], request: request, response: response) else {
+        return
+    }
+
+    guard let username = DB.getUserName(token: params["token"]!) else {
+        try badRequest(message: "Invalid 'token'.", response: response)
+        return
+    }
+
+    let blogId = params["blogId"]!
+
+    guard let post = DB.getBlogPost(id: blogId) else {
+        try badRequest(message: "Didn't find the blog post.", response: response)
+        return
+    }
+
+        // only the author can remove the post
+    guard post["author"]! == username else {
+        try badRequest(message: "The blog posts can only be removed by its author.", response: response)
+        return
+    }
+
+    guard let _ = try? DB.removePost(username: username, id: blogId) else {
+        try badRequest(message: "Failed to remove the post.", response: response)
+        return
+    }
+
+    var result = [String: Any]()
+    result["success"] = true
+    
+    let json = JSON( result )
+    try response.status(.OK).send(json: json).end()
+}
+
+
+router.post("/blog/update") {
+    request, response, next in
+}
+
+
 router.get("/blog/:username/getall") {
     request, response, next in
 
@@ -186,7 +229,6 @@ router.get("/blog/:username/getall") {
     let json = JSON( result )
     try response.status(.OK).send(json: json).end()
 }
-
 
 
     // configure the server
