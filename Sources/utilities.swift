@@ -45,32 +45,27 @@ func getPostParameters(_ keys: [String], _ request: RouterRequest, _ response: R
 }
 
 
-/**
- * Make sure we received an 'username' and a 'password'.
- */
-func validateUserParameters(_ request: RouterRequest, _ response: RouterResponse) throws -> (String, String)? {
-    guard let params = try getPostParameters(["username", "password"], request, response) else {
-        return nil
-    }
-
-    let username = params["username"]!
-    let password = params["password"]!
-
+func validateUserName(_ username: String, _ response: RouterResponse) throws -> String? {
     if username.characters.count < 3 || username.characters.count > 20 {
         try badRequest( message: "'username' needs to be between 3 an 20 characters.", response: response )
         return nil
     }
 
+    return username
+}
+
+
+func validatePassword(_ password: String, _ response: RouterResponse) throws -> String? {
     if password.characters.count < 6 || password.characters.count > 20 {
         try badRequest( message: "'password' needs to be between 6 and 20 characters.", response: response )
         return nil
     }
 
-    return (username, password)
+    return password
 }
 
 
-func validateUserName(_ params: [String: String], _ response: RouterResponse) throws -> String? {
+func validateToken(_ params: [String: String], _ response: RouterResponse) throws -> String? {
     guard let username = try? DB.getUserName(token: params["token"]!) else {
         try badRequest(message: "Invalid authentication 'token'.", response: response)
         return nil
@@ -125,9 +120,29 @@ func validateBlogId(_ request: RouterRequest, _ response: RouterResponse) throws
 /**
  * See if the username is the same as the post author.
  */
-func validateAuthor(_ post: [String: String], _ username, _ response: RouterResponse) throws -> Bool {
+func validateAuthor(_ post: [String: String], _ username: String, _ response: RouterResponse) throws -> Bool {
     guard post["author"]! == username else {
         try badRequest(message: "The blog posts state can only be changed by its author.", response: response)
+        return false
+    }
+
+    return true
+}
+
+
+/**
+ * Checks if the username/password pair is correct.
+ */
+func authenticateUser(_ username: String, _ password: String, _ response: RouterResponse) throws -> Bool {
+    guard let user = DB.getUser(name: username) else {
+        try badRequest(message: "Invalid 'username' (doesn't exist).", response: response)
+        return false
+    }
+
+    let testPassword = getPasswordHash(string: password, salt: user["salt"]!)
+
+    guard user["password"]! == testPassword else {
+        try badRequest(message: "Invalid password.", response: response)
         return false
     }
 

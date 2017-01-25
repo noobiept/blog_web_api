@@ -159,12 +159,11 @@ class Database {
     }
     
 
-    func updateBlogPost(username: String, title: String, body: String) throws {
+    func updateBlogPost(id: String, title: String, body: String) throws {
         try self.client.command("HMSET", params: [
             "post_\(id)",
             "title", title,
             "body", body,
-            "author", username
         ])
     }
 

@@ -27,7 +27,9 @@ router.get("/") {
 router.post("/user/create") {
     request, response, next in
 
-    guard let (username, password) = try validateUserParameters(request, response) else { return }
+    guard let params   = try getPostParameters(["username", "password"], request, response) else { return }
+    guard let username = try validateUserName(params["username"]!, response)                else { return }
+    guard let password = try validatePassword(params["password"]!, response)                else { return }
 
     guard DB.getUser(name: username) == nil else {
         try badRequest( message: "Invalid 'username' (already exists).", response: response )
@@ -62,19 +64,10 @@ router.post("/user/create") {
 router.post("/user/login") {
     request, response, next in
 
-    guard let (username, password) = try validateUserParameters(request, response) else { return }
-
-    guard let user = DB.getUser(name: username) else {
-        try badRequest(message: "Invalid 'username' (doesn't exist).", response: response)
-        return
-    }
-
-    let testPassword = getPasswordHash(string: password, salt: user["salt"]!)
-
-    guard user["password"]! == testPassword else {
-        try badRequest(message: "Invalid password.", response: response)
-        return
-    }
+    guard let params   = try getPostParameters(["username", "password"], request, response) else { return }
+    guard let username = try validateUserName(params["username"]!, response)                else { return }
+    guard let password = try validatePassword(params["password"]!, response)                else { return }
+    guard                try authenticateUser(username, password, response)                 else { return }
 
         // make a new token and send it back to the user
     var result = [String: Any]()
@@ -83,6 +76,19 @@ router.post("/user/login") {
 
     let json = JSON( result )
     try response.status(.OK).send(json: json).end()
+}
+
+
+router.post("/user/change_password") {
+    request, response, next in
+
+    guard let params      = try getPostParameters(["username", "password", "newPassword"], request, response) else { return }
+    guard let username    = try validateUserName(params["username"]!, response)    else { return }
+    guard let password    = try validatePassword(params["password"]!, response)    else { return }
+    guard let newPassword = try validatePassword(params["newPassword"]!, response) else { return }
+    guard                   try authenticateUser(username, password, response) else     { return }
+
+
 }
 
 
@@ -107,7 +113,7 @@ router.post("/blog/add") {
     request, response, next in
 
     guard let params        = try getPostParameters(["token", "title", "body"], request, response) else { return }
-    guard let username      = try validateUserName(params, response)                               else { return }
+    guard let username      = try validateToken(params, response)                                  else { return }
     guard let (title, body) = try validateTitleBody(params, response)                              else { return }
 
     let postId = try DB.addBlogPost(username: username, title: title, body: body) 
@@ -140,11 +146,11 @@ router.post("/blog/remove") {
     request, response, next in
 
     guard let params   = try getPostParameters(["token", "blogId"], request, response) else { return }
-    guard let username = try validateUserName(params, response)                        else { return }
+    guard let username = try validateToken(params, response)                           else { return }
     
     let blogId = params["blogId"]!
     guard let post = try validateBlogPost(params["blogId"]!, response) else { return }
-    guard validateAuthor(post, username, response) else { return }
+    guard try validateAuthor(post, username, response)                 else { return }
 
 
     guard let _ = try? DB.removePost(username: username, id: blogId) else {
@@ -164,12 +170,12 @@ router.post("/blog/update") {
     request, response, next in
 
     guard let params        = try getPostParameters(["token", "title", "body", "blogId"], request, response) else { return }
-    guard let username      = try validateUserName(params, response)                                         else { return }
-    guard let (title, body) = try validateTitleBody(params, response)                                        else { return }
-    guard let post = try validateBlogPost(params["blogId"]!, response) else { return }
-    guard try validateAuthor(post, username, response) else { return }
+    guard let username      = try validateToken(params, response)               else { return }
+    guard let (title, body) = try validateTitleBody(params, response)           else { return }
+    guard let post          = try validateBlogPost(params["blogId"]!, response) else { return }
+    guard                     try validateAuthor(post, username, response)      else { return }
 
-    guard let _ = try? DB.updateBlogPost(username: username, title: title, body: body) else {
+    guard let _ = try? DB.updateBlogPost(id: params["blogId"]!, title: title, body: body) else {
         try badRequest(message: "Failed to update the post.", response: response)
         return
     }
