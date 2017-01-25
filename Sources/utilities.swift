@@ -19,7 +19,7 @@ func badRequest(message: String, response: RouterResponse) throws {
 }
 
 
-func getPostParameters(keys: [String], request: RouterRequest, response: RouterResponse) throws -> [String: String]? {
+func getPostParameters(_ keys: [String], _ request: RouterRequest, _ response: RouterResponse) throws -> [String: String]? {
     guard let body = request.body else { 
         try badRequest( message: "No body in request.", response: response )
         return nil
@@ -48,8 +48,8 @@ func getPostParameters(keys: [String], request: RouterRequest, response: RouterR
 /**
  * Make sure we received an 'username' and a 'password'.
  */
-func getUserParameters(request: RouterRequest, response: RouterResponse) throws -> (String, String)? {
-    guard let params = try getPostParameters(keys: ["username", "password"], request: request, response: response) else {
+func validateUserParameters(_ request: RouterRequest, _ response: RouterResponse) throws -> (String, String)? {
+    guard let params = try getPostParameters(["username", "password"], request, response) else {
         return nil
     }
 
@@ -67,4 +67,56 @@ func getUserParameters(request: RouterRequest, response: RouterResponse) throws 
     }
 
     return (username, password)
+}
+
+
+func validateUserName(_ params: [String: String], _ response: RouterResponse) throws -> String? {
+    guard let username = try? DB.getUserName(token: params["token"]!) else {
+        try badRequest(message: "Invalid authentication 'token'.", response: response)
+        return nil
+    }
+
+    return username
+}
+
+
+/**
+ * Validate the 'title' and 'body' values.
+ */
+func validateTitleBody(_ params: [String: String], _ response: RouterResponse) throws -> (String, String)? {
+   
+    let title = params["title"]!
+    let body = params["body"]!
+    
+    guard title.characters.count >= 5 && title.characters.count <= 100 else {
+        try badRequest(message: "'title' needs to be between 5 and 100 characters.", response: response)
+        return nil
+    }
+
+    guard body.characters.count >= 10 && body.characters.count <= 10_000 else {
+        try badRequest(message: "'body' needs to be between 10 and 10000 characters.", response: response)
+        return nil
+    }
+
+    return (title, body)
+}
+
+
+func validateBlogPost(_ blogId: String, _ response: RouterResponse) throws -> [String: String]? {
+    guard let post = DB.getBlogPost(id: blogId) else {
+        try badRequest(message: "Didn't find the blog post.", response: response)
+        return nil
+    }
+
+    return post
+}
+
+
+func validateBlogId(_ request: RouterRequest, _ response: RouterResponse) throws -> String? {
+    guard let blogId = request.parameters["blogId"] else {
+        try badRequest(message: "Missing 'blogId' argument.", response: response)
+        return nil
+    }
+
+    return blogId
 }

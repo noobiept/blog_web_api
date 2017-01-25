@@ -27,9 +27,7 @@ router.get("/") {
 router.post("/user/create") {
     request, response, next in
 
-    guard let (username, password) = try getUserParameters(request: request, response: response) else {
-        return
-    }
+    guard let (username, password) = try validateUserParameters(request, response) else { return }
 
     guard DB.getUser(name: username) == nil else {
         try badRequest( message: "Invalid 'username' (already exists).", response: response )
@@ -64,9 +62,7 @@ router.post("/user/create") {
 router.post("/user/login") {
     request, response, next in
 
-    guard let (username, password) = try getUserParameters(request: request, response: response) else {
-        return
-    }
+    guard let (username, password) = try validateUserParameters(request, response) else { return }
 
     guard let user = DB.getUser(name: username) else {
         try badRequest(message: "Invalid 'username' (doesn't exist).", response: response)
@@ -110,28 +106,9 @@ router.get("/user/getall") {
 router.post("/blog/add") {
     request, response, next in
 
-    guard let params = try getPostParameters(keys: ["token", "title", "body"], request: request, response: response) else {
-        return
-    }
-
-    guard let username = DB.getUserName(token: params["token"]!) else {
-        try badRequest(message: "Invalid 'token'.", response: response)
-        return
-    }
-    
-    let title = params["title"]!
-    let body = params["body"]!
-    
-    guard title.characters.count >= 5 && title.characters.count <= 100 else {
-        try badRequest(message: "'title' needs to be between 5 and 100 characters.", response: response)
-        return
-    }
-
-    guard body.characters.count >= 10 && body.characters.count <= 10_000 else {
-        try badRequest(message: "'body' needs to be between 10 and 10000 characters.", response: response)
-        return
-    }
-
+    guard let params        = try getPostParameters(["token", "title", "body"], request, response) else { return }
+    guard let username      = try validateUserName(params, response)                               else { return }
+    guard let (title, body) = try validateTitleBody(params, response)                              else { return }
 
     let postId = try DB.addBlogPost(username: username, title: title, body: body) 
 
@@ -147,15 +124,8 @@ router.post("/blog/add") {
 router.get("/blog/get/:blogId") {
     request, response, next in
 
-    guard let blogId = request.parameters["blogId"] else {
-        try badRequest(message: "Missing 'blogId' argument.", response: response)
-        return
-    }
-
-    guard let post = DB.getBlogPost( id: blogId ) else {
-        try badRequest(message: "Didn't find the blog post.", response: response)
-        return
-    }
+    guard let blogId = try validateBlogId(request, response)  else { return }
+    guard let post   = try validateBlogPost(blogId, response) else { return }
 
     var result = [String: Any]()
     result["success"] = true
@@ -169,21 +139,11 @@ router.get("/blog/get/:blogId") {
 router.post("/blog/remove") {
     request, response, next in
 
-    guard let params = try getPostParameters(keys: ["token", "blogId"], request: request, response: response) else {
-        return
-    }
-
-    guard let username = DB.getUserName(token: params["token"]!) else {
-        try badRequest(message: "Invalid 'token'.", response: response)
-        return
-    }
-
+    guard let params   = try getPostParameters(["token", "blogId"], request, response) else { return }
+    guard let username = try validateUserName(params, response)                        else { return }
+    
     let blogId = params["blogId"]!
-
-    guard let post = DB.getBlogPost(id: blogId) else {
-        try badRequest(message: "Didn't find the blog post.", response: response)
-        return
-    }
+    guard let post = try validateBlogPost(params["blogId"]!, response) else { return }
 
         // only the author can remove the post
     guard post["author"]! == username else {
@@ -206,6 +166,11 @@ router.post("/blog/remove") {
 
 router.post("/blog/update") {
     request, response, next in
+
+    guard let params        = try getPostParameters(["token", "title", "body", "blogId"], request, response) else { return }
+    guard let username      = try validateUserName(params, response)                                         else { return }
+    guard let (title, body) = try validateTitleBody(params, response)                                        else { return }
+
 }
 
 

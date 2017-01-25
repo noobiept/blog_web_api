@@ -113,8 +113,8 @@ class Database {
     }
 
 
-    func getUserName(token: String) -> String? {
-        return try? self.client.command("GET", params: ["token_\(token)"]).toString()
+    func getUserName(token: String) throws -> String {
+        return try self.client.command("GET", params: ["token_\(token)"]).toString()
     }
 
 
