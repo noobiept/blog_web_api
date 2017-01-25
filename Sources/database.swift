@@ -194,4 +194,9 @@ class Database {
     func getRandomPostId() throws -> String {
         return try self.client.command("SRANDMEMBER", params: ["posts"]).toString()
     }
+
+
+    func getRandomUser() throws -> String {
+        return try self.client.command("SRANDMEMBER", params: ["users"]).toString()
+    }
 }

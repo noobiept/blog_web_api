@@ -108,6 +108,26 @@ router.get("/user/getall") {
 }
 
 
+router.get("/user/random") {
+    request, response, next in
+
+    guard let username = try? DB.getRandomUser() else {
+        try unsuccessfulRequest("No user available", response, .notFound)
+        return
+    }
+
+    let postsList = try? DB.getUserPosts(username: username)
+
+    var result = [String: Any]()
+    result["success"] = true
+    result["username"] = username
+    result["posts_ids"] = postsList
+
+    let json = JSON( result )
+    try response.status(.OK).send(json: json).end()
+}
+
+
 router.post("/blog/add") {
     request, response, next in
 
