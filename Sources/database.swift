@@ -166,7 +166,7 @@ class Database {
                 "title", title,
                 "body", body,
                 "author", username,
-                "time", try getCurrentTime()
+                "last_updated", try getCurrentTime()
             ])
             .enqueue("SADD", params: ["user_posts_\(username)", "\(id)"])
             .enqueue("SADD", params: ["posts", "\(id)"])
@@ -175,13 +175,14 @@ class Database {
 
         return id
     }
-    
+
 
     func updateBlogPost(id: String, title: String, body: String) throws {
         try self.client.command("HMSET", params: [
             "post_\(id)",
             "title", title,
             "body", body,
+            "last_updated", try getCurrentTime()
         ])
     }
 

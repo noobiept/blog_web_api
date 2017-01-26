@@ -169,7 +169,7 @@ router.post("/blog/remove") {
     
     let blogId = params["blogId"]!
     guard let post = try validateBlogPost(params["blogId"]!, response) else { return }
-    guard try validateAuthor(post, username, response)                 else { return }
+    guard            try validateAuthor(post, username, response)      else { return }
 
 
     guard let _ = try? DB.removePost(username: username, id: blogId) else {
