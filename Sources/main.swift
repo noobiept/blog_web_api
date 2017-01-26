@@ -44,7 +44,7 @@ router.post("/user/create") {
     var result = [String: Any]()
     result["success"] = true
     result["message"] = "User created."
-    result["token"] = DB.generateUserToken(username: username)
+    result["token"] = try? DB.generateUserToken(username: username)
 
     let json = JSON( result )
     try response.status(.OK).send(json: json).end()
@@ -62,7 +62,7 @@ router.post("/user/login") {
         // make a new token and send it back to the user
     var result = [String: Any]()
     result["success"] = true
-    result["token"] = DB.generateUserToken(username: username)
+    result["token"] = try? DB.generateUserToken(username: username)
 
     let json = JSON( result )
     try response.status(.OK).send(json: json).end()

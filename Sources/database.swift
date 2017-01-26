@@ -57,12 +57,16 @@ class Database {
         let saltString = CryptoUtils.hexString(from: salt)
         let passwordHash = getPasswordHash(string: password, salt: saltString)
 
-        try self.client.command("HMSET", params: [
+        try self.client.pipeline()
+            .enqueue("MULTI")
+            .enqueue("HMSET", params: [
                 "user_\(name)", 
                 "password", passwordHash, 
                 "salt", saltString
             ])
-        try self.client.command("SADD", params: ["users", name])
+            .enqueue("SADD", params: ["users", name])
+            .enqueue("EXEC")
+            .execute()
 
         return true
     }
@@ -126,13 +130,17 @@ class Database {
     /**
      * Generate the token to be used to authenticate a user.
      */
-    func generateUserToken(username: String) -> String {
+    func generateUserToken(username: String) throws -> String {
         let token = UUID().uuidString
         let oneDaySeconds = 86_400  // expire the token after 1 day
         let key = "token_\(token)"
 
-        _ = try? self.client.command("SET", params: [key, username])
-        _ = try? self.client.command("EXPIRE", params: [key, String( oneDaySeconds )])
+        try self.client.pipeline()
+            .enqueue("MULTI")
+            .enqueue("SET", params: [key, username])
+            .enqueue("EXPIRE", params: [key, String( oneDaySeconds )])
+            .enqueue("EXEC")
+            .execute()
 
         return token
     }
@@ -151,15 +159,19 @@ class Database {
     func addBlogPost(username: String, title: String, body: String) throws -> Int? {
         let id = try self.client.command("INCR", params: ["LAST_POST_ID"]).toInt()
 
-        _ = try self.client.command("HMSET", params: [
+        try self.client.pipeline()
+            .enqueue("MULTI")
+            .enqueue("HMSET", params: [
                 "post_\(id)",
                 "title", title,
                 "body", body,
                 "author", username,
                 "time", try getCurrentTime()
             ])
-        try self.client.command("SADD", params: ["user_posts_\(username)", "\(id)"])
-        try self.client.command("SADD", params: ["posts", "\(id)"])
+            .enqueue("SADD", params: ["user_posts_\(username)", "\(id)"])
+            .enqueue("SADD", params: ["posts", "\(id)"])
+            .enqueue("EXEC")
+            .execute()
 
         return id
     }
@@ -185,9 +197,13 @@ class Database {
 
 
     func removePost(username: String, id: String) throws {
-        try self.client.command("SREM", params: ["user_posts_\(username)", id])
-        try self.client.command("SREM", params: ["posts", id])
-        try self.client.command("DEL", params: ["post_\(id)"])
+        try self.client.pipeline()
+            .enqueue("MULTI")
+            .enqueue("SREM", params: ["user_posts_\(username)", id])
+            .enqueue("SREM", params: ["posts", id])
+            .enqueue("DEL", params: ["post_\(id)"])
+            .enqueue("EXEC")
+            .execute()
     }
 
 
