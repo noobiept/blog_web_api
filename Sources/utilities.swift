@@ -4,12 +4,18 @@ import Cryptor
 import SwiftyJSON
 
 
+/**
+ * Hash a password.
+ */
 func getPasswordHash(string: String, salt: String) -> String {
     let key = PBKDF.deriveKey(fromPassword: string, salt: salt, prf: .sha512, rounds: 250_000, derivedKeyLength: 64)
     return CryptoUtils.hexString(from: key)
 }
 
 
+/**
+ * Return an unsuccessful message.
+ */
 func unsuccessfulRequest(_ message: String, _ response: RouterResponse, _ code: HTTPStatusCode) throws {
     var result = [String: Any]()
     result["success"] = false
@@ -20,6 +26,9 @@ func unsuccessfulRequest(_ message: String, _ response: RouterResponse, _ code: 
 }
 
 
+/**
+ * Check if the required post parameters were sent.
+ */
 func getPostParameters(_ keys: [String], _ request: RouterRequest, _ response: RouterResponse) throws -> [String: String]? {
     guard let body = request.body else { 
         try unsuccessfulRequest("No body in request.", response, .badRequest)
@@ -46,6 +55,9 @@ func getPostParameters(_ keys: [String], _ request: RouterRequest, _ response: R
 }
 
 
+/**
+ * An 'username' needs to be between 3 and 20 characters.
+ */
 func validateUserName(_ username: String, _ response: RouterResponse) throws -> String? {
     if username.characters.count < 3 || username.characters.count > 20 {
         try unsuccessfulRequest("'username' needs to be between 3 an 20 characters.", response, .badRequest)
@@ -56,6 +68,9 @@ func validateUserName(_ username: String, _ response: RouterResponse) throws -> 
 }
 
 
+/**
+ * A 'password' needs to be between 6 and 20 characters.
+ */
 func validatePassword(_ password: String, _ response: RouterResponse) throws -> String? {
     if password.characters.count < 6 || password.characters.count > 20 {
         try unsuccessfulRequest("'password' needs to be between 6 and 20 characters.", response, .badRequest)
@@ -66,6 +81,9 @@ func validatePassword(_ password: String, _ response: RouterResponse) throws -> 
 }
 
 
+/**
+ * Check if the 'token' has a valid 'username' associated.
+ */
 func validateToken(_ params: [String: String], _ response: RouterResponse) throws -> String? {
     guard let username = try? DB.getUserName(token: params["token"]!) else {
         try unsuccessfulRequest("Invalid authentication 'token'.", response, .notFound)
@@ -98,6 +116,9 @@ func validateTitleBody(_ params: [String: String], _ response: RouterResponse) t
 }
 
 
+/**
+ * See if a blog post with the given ID exists.
+ */
 func validateBlogPost(_ blogId: String, _ response: RouterResponse) throws -> [String: String]? {
     guard let post = DB.getBlogPost(id: blogId) else {
         try unsuccessfulRequest("Didn't find the blog post.", response, .notFound)
@@ -108,6 +129,9 @@ func validateBlogPost(_ blogId: String, _ response: RouterResponse) throws -> [S
 }
 
 
+/**
+ * Check if we received the necessary 'blogId' parameter.
+ */
 func validateBlogId(_ request: RouterRequest, _ response: RouterResponse) throws -> String? {
     guard let blogId = request.parameters["blogId"] else {
         try unsuccessfulRequest("Missing 'blogId' argument.", response, .badRequest)

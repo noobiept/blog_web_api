@@ -13,16 +13,25 @@ let router = Router()
 router.all(middleware: BodyParser())
 
 
+/**
+ * Link to the documentation.
+ */
 router.get("/") {
     request, response, next in
        
     var result = [String: Any]()
+    result["success"] = true
+    result["message"] = "Visit the project website for usage information (https://bitbucket.org/drk4/blog_web_api)."
+    
     let json = JSON( result )
-
     try response.status(.OK).send(json: json).end()
 }
 
 
+/**
+ * Create a new user.
+ * Arguments: 'username' / 'password'
+ */
 router.post("/user/create") {
     request, response, next in
 
@@ -51,6 +60,10 @@ router.post("/user/create") {
 }
 
 
+/**
+ * Get an authentication token (used to add/remove/update posts).
+ * Arguments: 'username' / 'password'
+ */
 router.post("/user/login") {
     request, response, next in
 
@@ -69,6 +82,10 @@ router.post("/user/login") {
 }
 
 
+/**
+ * Change an existing user's password.
+ * Arguments: 'username' / 'password' / 'newPassword'
+ */
 router.post("/user/change_password") {
     request, response, next in
 
@@ -91,6 +108,9 @@ router.post("/user/change_password") {
 }
 
 
+/**
+ * Get a list with all the users name.
+ */
 router.get("/user/getall") {
     request, response, next in
 
@@ -108,6 +128,9 @@ router.get("/user/getall") {
 }
 
 
+/**
+ * Get a random username, and a list of ids of posts made by the selected user.
+ */
 router.get("/user/random") {
     request, response, next in
 
@@ -128,6 +151,10 @@ router.get("/user/random") {
 }
 
 
+/**
+ * Add a new post to the blog.
+ * Arguments: 'token' / 'title' / 'body'
+ */
 router.post("/blog/add") {
     request, response, next in
 
@@ -146,6 +173,10 @@ router.post("/blog/add") {
 }
 
 
+/**
+ * Get a specific blog post.
+ * Arguments: 'blogId'
+ */
 router.get("/blog/get/:blogId") {
     request, response, next in
 
@@ -161,6 +192,10 @@ router.get("/blog/get/:blogId") {
 }
 
 
+/**
+ * Remove a blog post.
+ * Arguments: 'token' / 'blogId'
+ */
 router.post("/blog/remove") {
     request, response, next in
 
@@ -185,6 +220,10 @@ router.post("/blog/remove") {
 }
 
 
+/**
+ * Update the contents of an existing blog post.
+ * Arguments: 'token' / 'title' / 'body'
+ */
 router.post("/blog/update") {
     request, response, next in
 
@@ -207,6 +246,10 @@ router.post("/blog/update") {
 }
 
 
+/**
+ * Get all the posts made by the given user.
+ * Arguments: 'username'
+ */
 router.get("/blog/:username/getall") {
     request, response, next in
 
@@ -229,6 +272,9 @@ router.get("/blog/:username/getall") {
 }
 
 
+/**
+ * Get a random blog post.
+ */
 router.get("/blog/random") {
     request, response, next in
 
