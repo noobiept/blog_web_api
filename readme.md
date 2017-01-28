@@ -1,8 +1,11 @@
 # Try it out #
 
+
 [http://blog-web-api.herokuapp.com/](http://blog-web-api.herokuapp.com/)
 
+
 # Urls #
+
 
 | Url | Http method | Parameters | Description | 
 |-----|-------------|------------|-------------|
@@ -21,17 +24,24 @@
 
 # Example #
 
+
 - curl --data "username=aaa&password=bbbbbb" http://localhost:8000/user/create
 - curl --data "token=cccccc&title=title&body=body" http://localhost:8000/blog/add
 - curl http://localhost:8000/blog/get/0
 
+Use either `http://localhost:8000` (when testing locally) or the `http://blog-web-api.herokuapp.com` url (live server).
+
+
 # Dependencies #
+
 
 - [Kitura](http://www.kitura.io/)
 - [Redis](https://redis.io/)
 - [Heroku build pack](https://github.com/kylef/heroku-buildpack-swift)
 
+
 # Development #
+
 
 | Command | Description |
 |---------|-------------|
@@ -39,7 +49,9 @@
 | `swift build && .build/debug/blog_web_api` | Compile and run the server. |
 | `git push heroku master` | Deploy to heroku. |
 
+
 # Database Keys #
+
 
 | Key | Description | Data Type |
 | ----|-------------|-----------|
