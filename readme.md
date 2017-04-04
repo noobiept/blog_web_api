@@ -7,7 +7,7 @@
 # Urls #
 
 
-| Url | Http method | Parameters | Description | 
+| Url | Http method | Parameters | Description |
 |-----|-------------|------------|-------------|
 | /user/create | POST | username / password | Create a user. |
 | /user/login | POST | username / password | Get an authentication token. |
@@ -46,6 +46,7 @@ Use either `http://localhost:8000` (when testing locally) or the `http://blog-we
 | Command | Description |
 |---------|-------------|
 | `redis-server` | Start the redis server. |
+| `swift package update` | Update all dependencies to latest version. |
 | `swift build && .build/debug/blog_web_api` | Compile and run the server. |
 | `git push heroku master` | Deploy to heroku. |
 
