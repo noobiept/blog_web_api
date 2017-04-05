@@ -319,6 +319,14 @@ class Database {
 
 
     /**
+     * Return a list with all the blog posts ids.
+     */
+    func getAllPosts() throws -> [String] {
+        return try getAllSetMembers(key: "posts")
+    }
+
+
+    /**
      * Get a random username.
      */
     func getRandomUser() throws -> String {

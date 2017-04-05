@@ -325,6 +325,21 @@ router.get("/blog/random") {
 }
 
 
+/**
+ * Get a list with all the blog posts ids.
+ */
+ router.get("/blog/getall") {
+     request, response, next in
+
+     var result = [String: Any]()
+     result["success"] = true
+     result["posts_ids"] = try DB.getAllPosts()
+
+     let json = JSON(result)
+     try response.status(.OK).send(json: json).end()
+ }
+
+
     // configure the server
 let serverPort = Int(ProcessInfo.processInfo.environment["PORT"] ?? "8000") ?? 8000
 

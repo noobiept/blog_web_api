@@ -21,6 +21,7 @@
 | /blog/update | POST | token / title / body / blogId | Update an existing blog post. |
 | /blog/:username/getall | GET | | Get all the blog posts of a specific user. |
 | /blog/random | GET | | Get a random blog post. |
+| /blog/getall | GET | Get a list with all blog ids available. |
 
 
 # Example #
