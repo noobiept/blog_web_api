@@ -194,7 +194,25 @@ class Database {
             .execute()
 
         return token
+    }
 
+
+    /**
+     * Each token has an expiration date. Remove the ones that have expired from the "user_tokens_*" set.
+     */
+    func cleanUserTokens(username: String) throws {
+        let userTokensKey = "user_tokens_\(username)"
+        let tokens = try self.client.command("SMEMBERS", params: [userTokensKey]).toArray()
+
+        for tokenObj in tokens {
+            let token = try tokenObj.toString()
+            let checkToken = try self.client.command("GET", params: ["token_\(token)"]).toMaybeString()
+
+                // doesn't exist anymore, clear from the set as well
+            if checkToken == nil {
+                try self.client.command("SREM", params: [userTokensKey, token])
+            }
+        }
     }
 
 

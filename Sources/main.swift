@@ -72,6 +72,8 @@ router.post("/user/login") {
     guard let password = try validatePassword(params["password"]!, response)                else { return }
     guard                try authenticateUser(username, password, response)                 else { return }
 
+    try DB.cleanUserTokens(username: username)
+
         // make a new token and send it back to the user
     var result = [String: Any]()
     result["success"] = true
