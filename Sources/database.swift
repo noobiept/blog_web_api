@@ -38,7 +38,7 @@ class Database {
             self.client = try Redbird(config: config)
             try self.setupInitValues()
         }
-        
+
         catch {
             Log.error("Redis error: \(error)")
             exit(1)
@@ -58,22 +58,45 @@ class Database {
      * Add a new user to the database.
      */
     func addUser(name: String, password: String) throws -> Bool {
-        guard let salt = try? Random.generate(byteCount: 64) else { 
+        guard let salt = try? Random.generate(byteCount: 64) else {
             Log.error("Failed to create the 'salt'.")
             return false
         }
-        
+
         let saltString = CryptoUtils.hexString(from: salt)
         let passwordHash = getPasswordHash(string: password, salt: saltString)
 
         try self.client.pipeline()
             .enqueue("MULTI")
             .enqueue("HMSET", params: [
-                "user_\(name)", 
-                "password", passwordHash, 
+                "user_\(name)",
+                "password", passwordHash,
                 "salt", saltString
             ])
             .enqueue("SADD", params: ["users", name])
+            .enqueue("EXEC")
+            .execute()
+
+        return true
+    }
+
+
+    /**
+     * Remove an existing user and his posts from the database.
+     */
+    func removeUser(name: String) throws -> Bool {
+            // remove the user's posts
+        let posts = try self.getUserPosts(username: name)
+
+        for postId in posts {
+            _ = try self.removePost(username: name, id: postId)
+        }
+
+            // remove the user information
+        try self.client.pipeline()
+            .enqueue("MULTI")
+            .enqueue("HDEL", params: ["user_\(name)", "password", "salt"])
+            .enqueue("SREM", params: ["users", name])
             .enqueue("EXEC")
             .execute()
 
@@ -130,7 +153,7 @@ class Database {
             dict[ field ] = value
             a += 2
         }
-    
+
         return dict
     }
 

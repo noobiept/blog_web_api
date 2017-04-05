@@ -18,11 +18,11 @@ router.all(middleware: BodyParser())
  */
 router.get("/") {
     request, response, next in
-       
+
     var result = [String: Any]()
     result["success"] = true
     result["message"] = "Visit the project website for usage information (https://bitbucket.org/drk4/blog_web_api)."
-    
+
     let json = JSON( result )
     try response.status(.OK).send(json: json).end()
 }
@@ -49,7 +49,7 @@ router.post("/user/create") {
         try unsuccessfulRequest("Failed to create the user.", response, .internalServerError)
         return
     }
-    
+
     var result = [String: Any]()
     result["success"] = true
     result["message"] = "User created."
@@ -76,6 +76,31 @@ router.post("/user/login") {
     var result = [String: Any]()
     result["success"] = true
     result["token"] = try? DB.generateUserToken(username: username)
+
+    let json = JSON( result )
+    try response.status(.OK).send(json: json).end()
+}
+
+
+/**
+ * Remove an existing user (and all his posts).
+ * Arguments: 'username' / 'password'
+ */
+router.post("/user/remove") {
+    request, response, next in
+
+    guard let params   = try getPostParameters(["username", "password"], request, response) else { return }
+    guard let username = try validateUserName(params["username"]!, response)                else { return }
+    guard let password = try validatePassword(params["password"]!, response)                else { return }
+    guard                try authenticateUser(username, password, response)                 else { return }
+
+    guard try DB.removeUser(name: username) else {
+        try unsuccessfulRequest("Failed to remove the user.", response, .notFound)
+        return
+    }
+
+    var result = [String: Any]()
+    result["success"] = true
 
     let json = JSON( result )
     try response.status(.OK).send(json: json).end()
@@ -162,7 +187,7 @@ router.post("/blog/add") {
     guard let username      = try validateToken(params, response)                                  else { return }
     guard let (title, body) = try validateTitleBody(params, response)                              else { return }
 
-    let postId = try DB.addBlogPost(username: username, title: title, body: body) 
+    let postId = try DB.addBlogPost(username: username, title: title, body: body)
 
     var result = [String: Any]()
     result["success"] = true
@@ -201,7 +226,7 @@ router.post("/blog/remove") {
 
     guard let params   = try getPostParameters(["token", "blogId"], request, response) else { return }
     guard let username = try validateToken(params, response)                           else { return }
-    
+
     let blogId = params["blogId"]!
     guard let post = try validateBlogPost(params["blogId"]!, response) else { return }
     guard            try validateAuthor(post, username, response)      else { return }
@@ -214,7 +239,7 @@ router.post("/blog/remove") {
 
     var result = [String: Any]()
     result["success"] = true
-    
+
     let json = JSON( result )
     try response.status(.OK).send(json: json).end()
 }
@@ -240,7 +265,7 @@ router.post("/blog/update") {
 
     var result = [String: Any]()
     result["success"] = true
-    
+
     let json = JSON( result )
     try response.status(.OK).send(json: json).end()
 }
