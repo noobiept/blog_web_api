@@ -13,6 +13,7 @@
 | /user/login | POST | username / password | Get an authentication token. |
 | /user/remove | POST | username / password | Remove an existing user (and all his posts). |
 | /user/change_password | POST | username / password / newPassword | Change the password. |
+| /user/invalidate_tokens | POST | username / password | Invalidate all of the user's previous tokens. Returns a new one. |
 | /user/getall | GET | | Get a list with all the users. |
 | /user/random | GET | | Get a random user. |
 | /blog/add | POST | token / title / body | Add a post to the blog. |
@@ -21,7 +22,7 @@
 | /blog/update | POST | token / title / body / blogId | Update an existing blog post. |
 | /blog/:username/getall | GET | | Get all the blog posts of a specific user. |
 | /blog/random | GET | | Get a random blog post. |
-| /blog/getall | GET | Get a list with all blog ids available. |
+| /blog/getall | GET | | Get a list with all blog ids available. |
 
 
 # Example #

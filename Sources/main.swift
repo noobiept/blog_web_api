@@ -77,7 +77,7 @@ router.post("/user/login") {
         // make a new token and send it back to the user
     var result = [String: Any]()
     result["success"] = true
-    result["token"] = try? DB.generateUserToken(username: username)
+    result["token"] = try DB.generateUserToken(username: username)
 
     let json = JSON( result )
     try response.status(.OK).send(json: json).end()
@@ -129,6 +129,29 @@ router.post("/user/change_password") {
         try unsuccessfulRequest("Failed to change the password.", response, .internalServerError)
         return
     }
+
+    var result = [String: Any]()
+    result["success"] = true
+    result["token"] = try DB.generateUserToken(username: username)
+
+    let json = JSON( result )
+    try response.status(.OK).send(json: json).end()
+}
+
+
+/**
+ * Invalidate all of the user's tokens. Will return a new one (the only one valid now).
+ * Arguments: username / password
+ */
+router.post("/user/invalidate_tokens") {
+    request, response, next in
+
+    guard let params   = try getPostParameters(["username", "password"], request, response) else { return }
+    guard let username = try validateUserName(params["username"]!, response)                else { return }
+    guard let password = try validatePassword(params["password"]!, response)                else { return }
+    guard                try authenticateUser(username, password, response)                 else { return }
+
+    try DB.removeAllTokens(username: username)
 
     var result = [String: Any]()
     result["success"] = true
