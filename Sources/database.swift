@@ -236,7 +236,7 @@ class Database {
     /**
      * Remove a blog post from the database.
      */
-    func removePost(username: String, id: String) throws {
+    func removePost(username: String, id: String) throws -> Bool {
         try self.client.pipeline()
             .enqueue("MULTI")
             .enqueue("SREM", params: ["user_posts_\(username)", id])
@@ -244,6 +244,8 @@ class Database {
             .enqueue("DEL", params: ["post_\(id)"])
             .enqueue("EXEC")
             .execute()
+
+        return true
     }
 
 

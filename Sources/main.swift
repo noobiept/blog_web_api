@@ -207,7 +207,7 @@ router.post("/blog/remove") {
     guard            try validateAuthor(post, username, response)      else { return }
 
 
-    guard let _ = try? DB.removePost(username: username, id: blogId) else {
+    guard try DB.removePost(username: username, id: blogId) else {
         try unsuccessfulRequest("Failed to remove the post.", response, .internalServerError)
         return
     }
