@@ -61,6 +61,7 @@ Use either `http://localhost:8000` (when testing locally) or the `http://blog-we
 | user_* | User information. | Hash |
 | users | Set with all the usernames. | Set |
 | user_posts_* | Set of IDs of posts made by this user. | Set |
+| user_tokens_* | Set with all the tokens of a given user. | Set |
 | token_* | Authentication token. | String |
 | post_* | Blog post information. | Hash |
 | posts | All post IDs. | Set |

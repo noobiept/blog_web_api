@@ -120,6 +120,9 @@ router.post("/user/change_password") {
     guard let newPassword = try validatePassword(params["newPassword"]!, response) else { return }
     guard                   try authenticateUser(username, password, response) else     { return }
 
+        // remove all previous tokens (they're invalidated due to the password change)
+    try DB.removeAllTokens(username: username)
+
     guard try DB.addUser(name: username, password: newPassword) else {
         try unsuccessfulRequest("Failed to change the password.", response, .internalServerError)
         return
@@ -127,6 +130,7 @@ router.post("/user/change_password") {
 
     var result = [String: Any]()
     result["success"] = true
+    result["token"] = try DB.generateUserToken(username: username)
 
     let json = JSON( result )
     try response.status(.OK).send(json: json).end()

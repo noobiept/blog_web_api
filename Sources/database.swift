@@ -92,6 +92,9 @@ class Database {
             _ = try self.removePost(username: name, id: postId)
         }
 
+            // remove all the associated tokens
+        try self.removeAllTokens(username: name)
+
             // remove the user information
         try self.client.pipeline()
             .enqueue("MULTI")
@@ -186,10 +189,27 @@ class Database {
             .enqueue("MULTI")
             .enqueue("SET", params: [key, username])
             .enqueue("EXPIRE", params: [key, String( oneDaySeconds )])
+            .enqueue("SADD", params: ["user_tokens_\(username)", token])
             .enqueue("EXEC")
             .execute()
 
         return token
+
+    }
+
+
+    /**
+     * Remove all the tokens associated with the given user.
+     */
+    func removeAllTokens(username: String) throws {
+        let userTokensKey = "user_tokens_\(username)"
+        let tokens = try self.client.command("SMEMBERS", params: [userTokensKey]).toArray()
+
+        for tokenObj in tokens {
+            let token = try tokenObj.toString()
+            try self.client.command("DEL", params: ["token_\(token)"])
+            try self.client.command("SREM", params: [userTokensKey, token])
+        }
     }
 
 
