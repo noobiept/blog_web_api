@@ -1,1 +1,1 @@
-web: .build/release/blog_web_api
+web: blog_web_api
