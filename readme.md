@@ -50,7 +50,7 @@ Use either `http://localhost:8000` (when testing locally) or the `http://blog-we
 |---------|-------------|
 | `redis-server` | Start the redis server. |
 | `swift package update` | Update all dependencies to latest version. |
-| `swift build && .build/debug/blog_web_api` | Compile and run the server. |
+| `swift build && .build/debug/blog_web_api` or `swift run` | Compile and run the server. |
 | `git push heroku master` | Deploy to heroku. |
 
 
