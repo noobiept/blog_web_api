@@ -1,7 +1,6 @@
 import Kitura
 import KituraNet
 import Cryptor
-import SwiftyJSON
 
 
 /**
@@ -21,8 +20,7 @@ func unsuccessfulRequest(_ message: String, _ response: RouterResponse, _ code: 
     result["success"] = false
     result["message"] = message
 
-    let json = JSON( result )
-    try response.status( code ).send( json: json ).end()
+    try response.status( code ).send( json: result ).end()
 }
 
 
@@ -30,12 +28,12 @@ func unsuccessfulRequest(_ message: String, _ response: RouterResponse, _ code: 
  * Check if the required post parameters were sent.
  */
 func getPostParameters(_ keys: [String], _ request: RouterRequest, _ response: RouterResponse) throws -> [String: String]? {
-    guard let body = request.body else { 
+    guard let body = request.body else {
         try unsuccessfulRequest("No body in request.", response, .badRequest)
         return nil
     }
-    
-    guard case .urlEncoded(let values) = body else { 
+
+    guard case .urlEncoded(let values) = body else {
         try unsuccessfulRequest("Arguments not properly url encoded.", response, .badRequest)
         return nil
     }
@@ -98,10 +96,10 @@ func validateToken(_ params: [String: String], _ response: RouterResponse) throw
  * Validate the 'title' and 'body' values.
  */
 func validateTitleBody(_ params: [String: String], _ response: RouterResponse) throws -> (String, String)? {
-   
+
     let title = params["title"]!
     let body = params["body"]!
-    
+
     guard title.characters.count >= 5 && title.characters.count <= 100 else {
         try unsuccessfulRequest("'title' needs to be between 5 and 100 characters.", response, .badRequest)
         return nil
