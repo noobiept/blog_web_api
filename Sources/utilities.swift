@@ -57,7 +57,7 @@ func getPostParameters(_ keys: [String], _ request: RouterRequest, _ response: R
  * An 'username' needs to be between 3 and 20 characters.
  */
 func validateUserName(_ username: String, _ response: RouterResponse) throws -> String? {
-    if username.characters.count < 3 || username.characters.count > 20 {
+    if username.count < 3 || username.count > 20 {
         try unsuccessfulRequest("'username' needs to be between 3 an 20 characters.", response, .badRequest)
         return nil
     }
@@ -70,7 +70,7 @@ func validateUserName(_ username: String, _ response: RouterResponse) throws -> 
  * A 'password' needs to be between 6 and 20 characters.
  */
 func validatePassword(_ password: String, _ response: RouterResponse) throws -> String? {
-    if password.characters.count < 6 || password.characters.count > 20 {
+    if password.count < 6 || password.count > 20 {
         try unsuccessfulRequest("'password' needs to be between 6 and 20 characters.", response, .badRequest)
         return nil
     }
@@ -100,12 +100,12 @@ func validateTitleBody(_ params: [String: String], _ response: RouterResponse) t
     let title = params["title"]!
     let body = params["body"]!
 
-    guard title.characters.count >= 5 && title.characters.count <= 100 else {
+    guard title.count >= 5 && title.count <= 100 else {
         try unsuccessfulRequest("'title' needs to be between 5 and 100 characters.", response, .badRequest)
         return nil
     }
 
-    guard body.characters.count >= 10 && body.characters.count <= 10_000 else {
+    guard body.count >= 10 && body.count <= 10_000 else {
         try unsuccessfulRequest("'body' needs to be between 10 and 10000 characters.", response, .badRequest)
         return nil
     }
