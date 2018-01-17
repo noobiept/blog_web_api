@@ -1,7 +1,6 @@
 import Kitura
 import HeliumLogger
 import LoggerAPI
-import SwiftyJSON
 import Foundation
 
 
@@ -23,8 +22,7 @@ router.get("/") {
     result["success"] = true
     result["message"] = "Visit the project website for usage information (https://bitbucket.org/drk4/blog_web_api)."
 
-    let json = JSON( result )
-    try response.status(.OK).send(json: json).end()
+    try response.status(.OK).send(json: result).end()
 }
 
 
@@ -55,8 +53,7 @@ router.post("/user/create") {
     result["message"] = "User created."
     result["token"] = try? DB.generateUserToken(username: username)
 
-    let json = JSON( result )
-    try response.status(.OK).send(json: json).end()
+    try response.status(.OK).send(json: result).end()
 }
 
 
@@ -79,8 +76,7 @@ router.post("/user/login") {
     result["success"] = true
     result["token"] = try DB.generateUserToken(username: username)
 
-    let json = JSON( result )
-    try response.status(.OK).send(json: json).end()
+    try response.status(.OK).send(json: result).end()
 }
 
 
@@ -104,8 +100,7 @@ router.post("/user/remove") {
     var result = [String: Any]()
     result["success"] = true
 
-    let json = JSON( result )
-    try response.status(.OK).send(json: json).end()
+    try response.status(.OK).send(json: result).end()
 }
 
 
@@ -134,8 +129,7 @@ router.post("/user/change_password") {
     result["success"] = true
     result["token"] = try DB.generateUserToken(username: username)
 
-    let json = JSON( result )
-    try response.status(.OK).send(json: json).end()
+    try response.status(.OK).send(json: result).end()
 }
 
 
@@ -157,8 +151,7 @@ router.post("/user/invalidate_tokens") {
     result["success"] = true
     result["token"] = try DB.generateUserToken(username: username)
 
-    let json = JSON( result )
-    try response.status(.OK).send(json: json).end()
+    try response.status(.OK).send(json: result).end()
 }
 
 
@@ -177,8 +170,7 @@ router.get("/user/getall") {
     result["success"] = true
     result["users"] = users
 
-    let json = JSON( result )
-    try response.status(.OK).send(json: json).end()
+    try response.status(.OK).send(json: result).end()
 }
 
 
@@ -200,8 +192,7 @@ router.get("/user/random") {
     result["username"] = username
     result["posts_ids"] = postsList
 
-    let json = JSON( result )
-    try response.status(.OK).send(json: json).end()
+    try response.status(.OK).send(json: result).end()
 }
 
 
@@ -222,8 +213,7 @@ router.post("/blog/add") {
     result["success"] = true
     result["post_id"] = postId
 
-    let json = JSON( result )
-    try response.status(.OK).send(json: json).end()
+    try response.status(.OK).send(json: result).end()
 }
 
 
@@ -241,8 +231,7 @@ router.get("/blog/get/:blogId") {
     result["success"] = true
     result["post"] = post
 
-    let json = JSON( result )
-    try response.status(.OK).send(json: json).end()
+    try response.status(.OK).send(json: result).end()
 }
 
 
@@ -269,8 +258,7 @@ router.post("/blog/remove") {
     var result = [String: Any]()
     result["success"] = true
 
-    let json = JSON( result )
-    try response.status(.OK).send(json: json).end()
+    try response.status(.OK).send(json: result).end()
 }
 
 
@@ -295,8 +283,7 @@ router.post("/blog/update") {
     var result = [String: Any]()
     result["success"] = true
 
-    let json = JSON( result )
-    try response.status(.OK).send(json: json).end()
+    try response.status(.OK).send(json: result).end()
 }
 
 
@@ -321,8 +308,7 @@ router.get("/blog/:username/getall") {
     result["success"] = true
     result["posts_ids"] = postsList
 
-    let json = JSON( result )
-    try response.status(.OK).send(json: json).end()
+    try response.status(.OK).send(json: result).end()
 }
 
 
@@ -343,8 +329,7 @@ router.get("/blog/random") {
     result["success"] = true
     result["post"] = post
 
-    let json = JSON( result )
-    try response.status(.OK).send(json: json).end()
+    try response.status(.OK).send(json: result).end()
 }
 
 
@@ -358,8 +343,7 @@ router.get("/blog/random") {
      result["success"] = true
      result["posts_ids"] = try DB.getAllPosts()
 
-     let json = JSON(result)
-     try response.status(.OK).send(json: json).end()
+     try response.status(.OK).send(json: result).end()
  }
 
 
