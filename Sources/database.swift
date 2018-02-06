@@ -146,14 +146,14 @@ class Database {
      * Generic function, returns all the members of a given redis set in an array.
      */
     func getAllSetMembers(key: String) throws -> [String] {
-        let members = try self.client.command(
+        let members = self.client.command(
             .custom("SMEMBERS".makeBytes()), [
                 key
             ]).array
         var all = [String]()
 
         for member in members {
-            all.append( try member.toString() )
+            all.append( member.string )
         }
 
         return all
@@ -205,8 +205,8 @@ class Database {
     /**
      * Get the username associated with the given token.
      */
-    func getUserName(token: String) throws -> String {
-        return try self.client.command(.get, ["token_\(token)"]).string
+    func getUserName(token: String) -> String {
+        return self.client.command(.get, ["token_\(token)"]).string
     }
 
 
@@ -254,14 +254,14 @@ class Database {
      */
     func cleanUserTokens(username: String) throws {
         let userTokensKey = "user_tokens_\(username)"
-        let tokens = try self.client.command(
+        let tokens = self.client.command(
             .custom("SMEMBERS".makeBytes()), [
                 userTokensKey
             ]).array
 
         for tokenObj in tokens {
-            let token = try tokenObj.string
-            let checkToken = try self.client.command(.get, ["token_\(token)"]).string
+            let token = tokenObj.string
+            let checkToken = self.client.command(.get, ["token_\(token)"]).string
 
                 // doesn't exist anymore, clear from the set as well
             if checkToken == nil {
@@ -281,13 +281,13 @@ class Database {
      */
     func removeAllTokens(username: String) throws {
         let userTokensKey = "user_tokens_\(username)"
-        let tokens = try self.client.command(
+        let tokens = self.client.command(
             .custom("SMEMBERS".makeBytes()), [
                 userTokensKey
             ]).array
 
         for tokenObj in tokens {
-            let token = try tokenObj.string
+            let token = tokenObj.string
             try self.client.command(
                 .custom("DEL".makeBytes()), [
                     "token_\(token)"
@@ -307,7 +307,7 @@ class Database {
      * Returns the Unix timestamp (number of seconds since 1/1/1970).
      */
     func getCurrentTime() throws -> String {
-        let time = try self.client.command(
+        let time = self.client.command(
             .custom("TIME".makeBytes())
             ).array
 
@@ -319,7 +319,7 @@ class Database {
      * Add a new blog post to the database.
      */
     func addBlogPost(username: String, title: String, body: String) throws -> Int? {
-        let id = try self.client.command(
+        let id = self.client.command(
             .custom("INCR".makeBytes()), [
                 "LAST_POST_ID"
             ]).int
@@ -426,8 +426,8 @@ class Database {
     /**
      * Get a random post ID.
      */
-    func getRandomPostId() throws -> String {
-        return try self.client.command(
+    func getRandomPostId() -> String {
+        return self.client.command(
             .custom("SRANDMEMBER".makeBytes()), [
                 "posts"
             ]
@@ -446,8 +446,8 @@ class Database {
     /**
      * Get a random username.
      */
-    func getRandomUser() throws -> String {
-        return try self.client.command(
+    func getRandomUser() -> String {
+        return self.client.command(
             .custom("SRANDMEMBER".makeBytes()), [
                 "users"
             ]
