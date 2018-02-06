@@ -42,8 +42,8 @@
         "repositoryURL": "https://github.com/IBM-Swift/BlueCryptor.git",
         "state": {
           "branch": null,
-          "revision": "12f9be466d1166b16da8cb2a9d549098990248d1",
-          "version": "0.8.25"
+          "revision": "de20ec9af166d779a08c16f05146f4b9124478d0",
+          "version": "0.8.27"
         }
       },
       {
@@ -78,8 +78,8 @@
         "repositoryURL": "https://github.com/IBM-Swift/Kitura.git",
         "state": {
           "branch": null,
-          "revision": "9673af0daf3d3947675acc9c9d0755476ce4aa5b",
-          "version": "2.1.3"
+          "revision": "3d42897fa83537b97592512a7a85af61e9ce53ea",
+          "version": "2.2.0"
         }
       },
       {
@@ -123,8 +123,8 @@
         "repositoryURL": "https://github.com/vapor/node.git",
         "state": {
           "branch": null,
-          "revision": "e8e21dfe88aa14be905d6e98d5333f666c2e1a78",
-          "version": "2.1.3"
+          "revision": "c4ff32f07657aec849677e5aecb657bb6c85098d",
+          "version": "2.1.4"
         }
       },
       {
@@ -147,7 +147,7 @@
       },
       {
         "package": "Redis",
-        "repositoryURL": "https://github.com/czechboy0/Redbird.git",
+        "repositoryURL": "https://github.com/vapor/redis.git",
         "state": {
           "branch": null,
           "revision": "42cb0a0a0b757eff30005adeead82ce0f718e566",
@@ -159,8 +159,8 @@
         "repositoryURL": "https://github.com/IBM-Swift/BlueSignals.git",
         "state": {
           "branch": null,
-          "revision": "0fab5a9f166e96f17bb9646dc56cd22a6f3c3757",
-          "version": "0.9.50"
+          "revision": "d00d066869deec7b42a2ac3bd93f8df6753cdd2d",
+          "version": "0.9.52"
         }
       },
       {
@@ -168,8 +168,8 @@
         "repositoryURL": "https://github.com/IBM-Swift/BlueSocket.git",
         "state": {
           "branch": null,
-          "revision": "15ad09461f19a993fe5efb0e42b323adafc3533d",
-          "version": "0.12.83"
+          "revision": "fbd08641c8689626a65d7eb0e826085cf4c54788",
+          "version": "0.12.90"
         }
       },
       {
@@ -182,30 +182,12 @@
         }
       },
       {
-        "package": "Socks",
-        "repositoryURL": "https://github.com/vapor/socks.git",
-        "state": {
-          "branch": null,
-          "revision": "0e39b4c53b213888284821348d7c6b000ee836da",
-          "version": "1.2.7"
-        }
-      },
-      {
         "package": "SSLService",
         "repositoryURL": "https://github.com/IBM-Swift/BlueSSLService.git",
         "state": {
           "branch": null,
-          "revision": "18ed96d20615d3de25874ab141bde55c0e5bc3ec",
-          "version": "0.12.73"
-        }
-      },
-      {
-        "package": "SwiftyJSON",
-        "repositoryURL": "https://github.com/IBM-Swift/SwiftyJSON.git",
-        "state": {
-          "branch": null,
-          "revision": "1190845cf7d25a5c8ea7653fe03dcdd39a082056",
-          "version": "17.0.0"
+          "revision": "05ece03dcfc6683ff05c9db446948793fc5dd68e",
+          "version": "0.12.80"
         }
       },
       {

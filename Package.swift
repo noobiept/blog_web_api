@@ -7,10 +7,9 @@ let package = Package(
         .executable( name: "blog_web_api", targets: [ "blog_web_api" ] )
     ],
     dependencies: [
-        .package( url: "https://github.com/IBM-Swift/Kitura.git",       .upToNextMajor( from: "2.1.0" ) ),
+        .package( url: "https://github.com/IBM-Swift/Kitura.git",       .upToNextMajor( from: "2.2.0" ) ),
         .package( url: "https://github.com/IBM-Swift/HeliumLogger.git", .upToNextMajor( from: "1.7.0" ) ),
         .package( url: "https://github.com/IBM-Swift/BlueCryptor.git",  .upToNextMajor( from: "0.8.0" ) ),
-        .package( url: "https://github.com/IBM-Swift/SwiftyJSON.git",   .upToNextMajor( from: "17.0.0" ) ),
         .package( url: "https://github.com/vapor/redis.git",            .upToNextMajor( from: "2.2.0" ) ),
     ],
     targets: [
@@ -19,9 +18,8 @@ let package = Package(
             dependencies: [
                 "Kitura",
                 "HeliumLogger",
-                "Redis",
                 "Cryptor",
-                "SwiftyJSON"
+                "Redis",
             ],
             path: "./Sources"
         )
