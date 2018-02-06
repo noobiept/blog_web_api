@@ -43,7 +43,7 @@ router.post("/user/create") {
     }
 
         // create the user
-    guard let added = try? DB.addUser(name: username, password: password) else {
+    guard let _ = try? DB.addUser(name: username, password: password) else {
         try unsuccessfulRequest("Failed to create the user.", response, .internalServerError)
         return
     }
@@ -180,12 +180,14 @@ router.get("/user/getall") {
 router.get("/user/random") {
     request, response, next in
 
-    guard let username = try? DB.getRandomUser() else {
+    guard let username = try DB.getRandomUser() else {
         try unsuccessfulRequest("No user available", response, .notFound)
         return
     }
 
-    let postsList = try? DB.getUserPosts(username: username)
+    guard let postsList = try? DB.getUserPosts(username: username) else {
+        return
+    }
 
     var result = [String: Any]()
     result["success"] = true
@@ -318,7 +320,7 @@ router.get("/blog/:username/getall") {
 router.get("/blog/random") {
     request, response, next in
 
-    guard let random = try? DB.getRandomPostId() else {
+    guard let random = try DB.getRandomPostId() else {
         try unsuccessfulRequest("Couldn't find any post.", response, .notFound)
         return
     }
