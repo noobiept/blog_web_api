@@ -338,6 +338,7 @@ class Database {
             .custom("INCR".makeBytes()), [
                 "LAST_POST_ID"
             ])!.int!
+        let time = try getCurrentTime()
 
         try self.client.makePipeline()
             .enqueue(
@@ -349,7 +350,7 @@ class Database {
                     "title", title,
                     "body", body,
                     "author", username,
-                    "last_updated", try getCurrentTime()
+                    "last_updated", time
                 ]
             )
             .enqueue(
