@@ -1,11 +1,11 @@
 import Foundation
-import Redbird
+import Redis
 import LoggerAPI
 import Cryptor
 
 
 class Database {
-    let client: Redbird
+    let client: TCPClient
 
 
     /**
@@ -34,8 +34,7 @@ class Database {
         }
 
         do {
-            let config = RedbirdConfig(address: redisHost, port: redisPort, password: redisPassword)
-            self.client = try Redbird(config: config)
+            self.client = try TCPClient(hostname:redisHost, port: redisPort, password: redisPassword)
             try self.setupInitValues()
         }
 
@@ -50,7 +49,7 @@ class Database {
      * Set up some initial values that are used by the program.
      */
     func setupInitValues() throws {
-        try self.client.command("SETNX", params: ["LAST_POST_ID", "-1"])
+        try self.client.command(.set, ["LAST_POST_ID", "-1", "NX"])
     }
 
 
@@ -66,15 +65,28 @@ class Database {
         let saltString = CryptoUtils.hexString(from: salt)
         let passwordHash = getPasswordHash(string: password, salt: saltString)
 
-        try self.client.pipeline()
-            .enqueue("MULTI")
-            .enqueue("HMSET", params: [
-                "user_\(name)",
-                "password", passwordHash,
-                "salt", saltString
-            ])
-            .enqueue("SADD", params: ["users", name])
-            .enqueue("EXEC")
+        try self.client.makePipeline()
+            .enqueue(
+                .custom("MULTI".makeBytes())
+            )
+            .enqueue(
+                .custom("HMSET".makeBytes()), [
+                    "user_\(name)",
+                    "password",
+                    passwordHash,
+                    "salt",
+                    saltString
+                ]
+            )
+            .enqueue(
+                .custom("SADD".makeBytes()), [
+                    "users",
+                    name
+                ]
+            )
+            .enqueue(
+                .custom("EXEC".makeBytes())
+            )
             .execute()
 
         return true
@@ -96,12 +108,12 @@ class Database {
         try self.removeAllTokens(username: name)
 
             // remove the user information
-        try self.client.pipeline()
+        /*try self.client.pipeline()
             .enqueue("MULTI")
             .enqueue("HDEL", params: ["user_\(name)", "password", "salt"])
             .enqueue("SREM", params: ["users", name])
             .enqueue("EXEC")
-            .execute()
+            .execute()*/
 
         return true
     }
@@ -119,15 +131,16 @@ class Database {
      * Generic function, returns all the members of a given redis set in an array.
      */
     func getAllSetMembers(key: String) throws -> [String] {
-        let members = try self.client.command("SMEMBERS", params: [ key ]).toArray()
-
+        /*let members = try self.client.command("SMEMBERS", params: [ key ]).toArray()
+        let members = [String]()
         var all = [String]()
 
         for member in members {
             all.append( try member.toString() )
         }
 
-        return all
+        return all*/
+        return [String]()
     }
 
 
@@ -136,9 +149,13 @@ class Database {
      */
     func getHash(key: String) -> [String: String]? {
             // returns an array instead of a hash, where every field is followed by its value
-        let hash = try? self.client.command("HGETALL", params: [ key ]).toArray()
+        let response = try? self.client.command(.custom("HGETALL".makeBytes()), [ key ])
 
-        guard let hashList = hash else {
+        guard let hashData = response else {
+            return nil
+        }
+
+        guard let hashList = hashData!.array else {
             return nil
         }
 
@@ -150,8 +167,8 @@ class Database {
         var a = 0
 
         while (a < hashList.count) {
-            let field = try! hashList[ a ].toString()
-            let value = try! hashList[ a + 1 ].toString()
+            let field = hashList[ a ]!.string!
+            let value = hashList[ a + 1 ]!.string!
 
             dict[ field ] = value
             a += 2
@@ -173,7 +190,8 @@ class Database {
      * Get the username associated with the given token.
      */
     func getUserName(token: String) throws -> String {
-        return try self.client.command("GET", params: ["token_\(token)"]).toString()
+        //return try self.client.command("GET", params: ["token_\(token)"]).toString()
+        return ""
     }
 
 
@@ -182,7 +200,7 @@ class Database {
      */
     func generateUserToken(username: String) throws -> String {
         let token = UUID().uuidString
-        let oneDaySeconds = 86_400  // expire the token after 1 day
+/*        let oneDaySeconds = 86_400  // expire the token after 1 day
         let key = "token_\(token)"
 
         try self.client.pipeline()
@@ -192,7 +210,7 @@ class Database {
             .enqueue("SADD", params: ["user_tokens_\(username)", token])
             .enqueue("EXEC")
             .execute()
-
+*/
         return token
     }
 
@@ -201,7 +219,7 @@ class Database {
      * Each token has an expiration date. Remove the ones that have expired from the "user_tokens_*" set.
      */
     func cleanUserTokens(username: String) throws {
-        let userTokensKey = "user_tokens_\(username)"
+        /*let userTokensKey = "user_tokens_\(username)"
         let tokens = try self.client.command("SMEMBERS", params: [userTokensKey]).toArray()
 
         for tokenObj in tokens {
@@ -212,7 +230,7 @@ class Database {
             if checkToken == nil {
                 try self.client.command("SREM", params: [userTokensKey, token])
             }
-        }
+        }*/
     }
 
 
@@ -220,14 +238,14 @@ class Database {
      * Remove all the tokens associated with the given user.
      */
     func removeAllTokens(username: String) throws {
-        let userTokensKey = "user_tokens_\(username)"
+        /*let userTokensKey = "user_tokens_\(username)"
         let tokens = try self.client.command("SMEMBERS", params: [userTokensKey]).toArray()
 
         for tokenObj in tokens {
             let token = try tokenObj.toString()
             try self.client.command("DEL", params: ["token_\(token)"])
             try self.client.command("SREM", params: [userTokensKey, token])
-        }
+        }*/
     }
 
 
@@ -235,9 +253,10 @@ class Database {
      * Returns the Unix timestamp (number of seconds since 1/1/1970).
      */
     func getCurrentTime() throws -> String {
-        let time = try self.client.command("TIME").toArray()
+        /*let time = try self.client.command("TIME").toArray()
 
-        return try time[ 0 ].toString()
+        return try time[ 0 ].toString()*/
+        return ""
     }
 
 
@@ -245,7 +264,7 @@ class Database {
      * Add a new blog post to the database.
      */
     func addBlogPost(username: String, title: String, body: String) throws -> Int? {
-        let id = try self.client.command("INCR", params: ["LAST_POST_ID"]).toInt()
+        /*let id = try self.client.command("INCR", params: ["LAST_POST_ID"]).toInt()
 
         try self.client.pipeline()
             .enqueue("MULTI")
@@ -259,8 +278,8 @@ class Database {
             .enqueue("SADD", params: ["user_posts_\(username)", "\(id)"])
             .enqueue("SADD", params: ["posts", "\(id)"])
             .enqueue("EXEC")
-            .execute()
-
+            .execute()*/
+        let id = 1
         return id
     }
 
@@ -269,12 +288,12 @@ class Database {
      * Update the contents of an existing blog post.
      */
     func updateBlogPost(id: String, title: String, body: String) throws {
-        try self.client.command("HMSET", params: [
+        /*try self.client.command("HMSET", params: [
             "post_\(id)",
             "title", title,
             "body", body,
             "last_updated", try getCurrentTime()
-        ])
+        ])*/
     }
 
 
@@ -290,7 +309,8 @@ class Database {
      * Get a list of ids of all the posts made by the user.
      */
     func getUserPosts(username: String) throws -> [String] {
-        return try self.getAllSetMembers(key: "user_posts_\(username)")
+        //return try self.getAllSetMembers(key: "user_posts_\(username)")
+        return [""]
     }
 
 
@@ -298,13 +318,13 @@ class Database {
      * Remove a blog post from the database.
      */
     func removePost(username: String, id: String) throws -> Bool {
-        try self.client.pipeline()
+        /*try self.client.pipeline()
             .enqueue("MULTI")
             .enqueue("SREM", params: ["user_posts_\(username)", id])
             .enqueue("SREM", params: ["posts", id])
             .enqueue("DEL", params: ["post_\(id)"])
             .enqueue("EXEC")
-            .execute()
+            .execute()*/
 
         return true
     }
@@ -314,7 +334,8 @@ class Database {
      * Get a random post ID.
      */
     func getRandomPostId() throws -> String {
-        return try self.client.command("SRANDMEMBER", params: ["posts"]).toString()
+        //return try self.client.command("SRANDMEMBER", params: ["posts"]).toString()
+        return ""
     }
 
 
@@ -330,6 +351,7 @@ class Database {
      * Get a random username.
      */
     func getRandomUser() throws -> String {
-        return try self.client.command("SRANDMEMBER", params: ["users"]).toString()
+        //return try self.client.command("SRANDMEMBER", params: ["users"]).toString()
+        return ""
     }
 }
