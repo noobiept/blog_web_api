@@ -146,14 +146,23 @@ class Database {
      * Generic function, returns all the members of a given redis set in an array.
      */
     func getAllSetMembers(key: String) throws -> [String] {
-        let members = self.client.command(
+        let response = try self.client.command(
             .custom("SMEMBERS".makeBytes()), [
                 key
-            ]).array
+            ]
+        )
         var all = [String]()
 
+        guard let members = response?.array else {
+            return all
+        }
+
         for member in members {
-            all.append( member.string )
+            let value = member?.string
+
+            if value != nil {
+                all.append( value! )
+            }
         }
 
         return all
@@ -205,8 +214,8 @@ class Database {
     /**
      * Get the username associated with the given token.
      */
-    func getUserName(token: String) -> String {
-        return self.client.command(.get, ["token_\(token)"]).string
+    func getUserName(token: String) throws -> String? {
+        return try self.client.command(.get, ["token_\(token)"])?.string
     }
 
 
@@ -254,19 +263,22 @@ class Database {
      */
     func cleanUserTokens(username: String) throws {
         let userTokensKey = "user_tokens_\(username)"
-        let tokens = self.client.command(
+        let tokens = try self.client.command(
             .custom("SMEMBERS".makeBytes()), [
                 userTokensKey
-            ]).array
+            ])!.array!
 
         for tokenObj in tokens {
-            let token = tokenObj.string
-            let checkToken = self.client.command(.get, ["token_\(token)"]).string
+            guard let token = tokenObj?.string else {
+                continue
+            }
+
+            let checkToken = try self.client.command(.get, ["token_\(token)"])?.string
 
                 // doesn't exist anymore, clear from the set as well
             if checkToken == nil {
                 try self.client.command(
-                    .custom("SREM".makeBytes()) [
+                    .custom("SREM".makeBytes()), [
                         userTokensKey,
                         token
                     ]
@@ -281,13 +293,16 @@ class Database {
      */
     func removeAllTokens(username: String) throws {
         let userTokensKey = "user_tokens_\(username)"
-        let tokens = self.client.command(
+        let tokens = try self.client.command(
             .custom("SMEMBERS".makeBytes()), [
                 userTokensKey
-            ]).array
+            ])!.array!
 
         for tokenObj in tokens {
-            let token = tokenObj.string
+            guard let token = tokenObj?.string else {
+                continue
+            }
+
             try self.client.command(
                 .custom("DEL".makeBytes()), [
                     "token_\(token)"
@@ -307,11 +322,11 @@ class Database {
      * Returns the Unix timestamp (number of seconds since 1/1/1970).
      */
     func getCurrentTime() throws -> String {
-        let time = self.client.command(
+        let time = try self.client.command(
             .custom("TIME".makeBytes())
-            ).array
+            )!.array!
 
-        return try time[ 0 ].string
+        return time[ 0 ]!.string!
     }
 
 
@@ -319,17 +334,17 @@ class Database {
      * Add a new blog post to the database.
      */
     func addBlogPost(username: String, title: String, body: String) throws -> Int? {
-        let id = self.client.command(
+        let id = try self.client.command(
             .custom("INCR".makeBytes()), [
                 "LAST_POST_ID"
-            ]).int
+            ])!.int!
 
         try self.client.makePipeline()
             .enqueue(
                 .custom("MULTI".makeBytes())
             )
             .enqueue(
-                .custom("HMSET".makeBytes()) [
+                .custom("HMSET".makeBytes()), [
                     "post_\(id)",
                     "title", title,
                     "body", body,
@@ -426,12 +441,12 @@ class Database {
     /**
      * Get a random post ID.
      */
-    func getRandomPostId() -> String {
-        return self.client.command(
+    func getRandomPostId() throws -> String? {
+        return try self.client.command(
             .custom("SRANDMEMBER".makeBytes()), [
                 "posts"
             ]
-        ).string
+        )?.string
     }
 
 
@@ -446,11 +461,11 @@ class Database {
     /**
      * Get a random username.
      */
-    func getRandomUser() -> String {
-        return self.client.command(
+    func getRandomUser() throws -> String? {
+        return try self.client.command(
             .custom("SRANDMEMBER".makeBytes()), [
                 "users"
             ]
-        ).string
+        )?.string
     }
 }
