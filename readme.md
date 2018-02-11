@@ -55,6 +55,14 @@ Use either `http://localhost:8000` (when testing locally) or the `http://blog-we
 | `git push heroku master` | Deploy to heroku. |
 
 
+# Testing #
+
+
+Start the database (`redis-server`) and the application (`swift run`) and then run the tests.
+
+- `python3 Tests/tests.py`
+
+
 # Database Keys #
 
 
