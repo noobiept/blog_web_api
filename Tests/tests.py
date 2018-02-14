@@ -6,23 +6,30 @@ from urllib.parse import urljoin
 import itertools
 
 URL = 'http://localhost:8000/'
-USERNAME = 'testUsername'
-PASSWORD = 'bbbbbb'
-TOKEN = ''
 
 
 class TestBlog(unittest.TestCase):
-    @classmethod
-    def tearDownClass(cls):
+    def setUp(self):
         """
-            Remove the test username at the end of the tests.
+            Create a user at the beginning of each test.
         """
-        completeUrl = urljoin(URL, '/user/remove')
-        requests.post(
-            completeUrl, data={
-                'username': USERNAME,
-                'password': PASSWORD
-            })
+        self.username = 'testUsername'
+        self.password = 'bbbbbb'
+
+        response = self.makeRequest('/user/create', {
+            'username': self.username,
+            'password': self.password
+        })
+        self.token = response['token']
+
+    def tearDown(self):
+        """
+            Remove the test username at the end of the test.
+        """
+        self.makeRequest('/user/remove', {
+            'username': self.username,
+            'password': self.password
+        })
 
     def makeRequest(self, path, data=None):
         """
@@ -64,12 +71,12 @@ class TestBlog(unittest.TestCase):
 
         self.missingArguments(url, ['username', 'password'])
 
-        # Correct usage.
+        # already exists
         response = self.makeRequest(url, {
-            'username': USERNAME,
-            'password': PASSWORD
+            'username': self.username,
+            'password': self.password
         })
-        self.assertEqual(response['success'], True)
+        self.assertEqual(response['success'], False)
 
     def test_user_login(self):
         url = '/user/login'
