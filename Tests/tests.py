@@ -72,10 +72,14 @@ class TestBlog(unittest.TestCase):
         self.assertEqual(response['success'], True)
 
     def test_user_login(self):
-        pass
+        url = '/user/login'
+
+        self.missingArguments(url, ['username', 'password'])
 
     def test_user_remove(self):
-        pass
+        url = '/user/remove'
+
+        self.missingArguments(url, ['username', 'password'])
 
     def test_user_change_password(self):
         url = '/user/change_password'
@@ -83,36 +87,45 @@ class TestBlog(unittest.TestCase):
         self.missingArguments(url, ['username', 'password', 'newPassword'])
 
     def test_user_invalidate_tokens(self):
-        pass
+        url = '/user/invalidate_tokens'
+
+        self.missingArguments(url, ['username', 'password'])
 
     def test_user_getall(self):
-        response = self.makeRequest('/user/getall')
+        url = '/user/getall'
 
+        response = self.makeRequest(url)
         self.assertEqual(response['success'], True)
 
     def test_user_random(self):
-        pass
+        url = '/user/random'
 
     def test_blog_add(self):
-        pass
+        url = '/blog/add'
+
+        self.missingArguments(url, ['token', 'title', 'body'])
 
     def test_blog_get(self):
-        pass
+        url = '/blog/get/:blogId'
 
     def test_blog_remove(self):
-        pass
+        url = 'blog/remove'
+
+        self.missingArguments(url, ['token', 'blogId'])
 
     def test_blog_update(self):
-        pass
+        url = '/blog/update'
+
+        self.missingArguments(url, ['token', 'title', 'body', 'blogId'])
 
     def test_blog_username_getall(self):
-        pass
+        url = '/blog/:username/getall'
 
     def test_blog_random(self):
-        pass
+        url = '/blog/random'
 
     def test_blog_getall(self):
-        pass
+        url = '/blog/getall'
 
 
 if __name__ == '__main__':
