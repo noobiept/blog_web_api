@@ -3,6 +3,7 @@ import requests
 import json
 import os.path
 from urllib.parse import urljoin
+import itertools
 
 URL = 'http://localhost:8000/'
 USERNAME = 'testUsername'
@@ -38,13 +39,33 @@ class TestBlog(unittest.TestCase):
 
         return json.loads(r.text)
 
+    def missingArguments(self, url, arguments):
+        """
+            Test all combinations of missing arguments.
+            The request shouldn't be successfull (since its missing at least 1 argument).
+        """
+        for length in range(0, len(arguments)):
+            # get all the combinations of arguments possible (of different lengths)
+            combinations = itertools.combinations(arguments, length)
+
+            for combination in combinations:
+                data = {}
+
+                # construct a data argument to pass along (doesn't matter the actual data, just that we're passing along that argument)
+                for argument in combination:
+                    data[argument] = '1'
+
+                # make a request with an incomplete set of arguments, it shouldn't work
+                response = self.makeRequest(url, data)
+                self.assertEqual(response['success'], False)
+
     def test_user_create(self):
-        # Called without the correct arguments.
-        response = self.makeRequest('/user/create', {})
-        self.assertEqual(response['success'], False)
+        url = '/user/create'
+
+        self.missingArguments(url, ['username', 'password'])
 
         # Correct usage.
-        response = self.makeRequest('/user/create', {
+        response = self.makeRequest(url, {
             'username': USERNAME,
             'password': PASSWORD
         })
@@ -57,7 +78,9 @@ class TestBlog(unittest.TestCase):
         pass
 
     def test_user_change_password(self):
-        pass
+        url = '/user/change_password'
+
+        self.missingArguments(url, ['username', 'password', 'newPassword'])
 
     def test_user_invalidate_tokens(self):
         pass
