@@ -9,26 +9,31 @@ URL = 'http://localhost:8000/'
 
 
 class TestBlog(unittest.TestCase):
-    def setUp(self):
+    def createUser(self):
         """
-            Create a user at the beginning of each test.
+            Create a test user account.
         """
-        self.username = 'testUsername'
-        self.password = 'bbbbbb'
+        username = 'testUsername'
+        password = 'bbbbbb'
 
         response = self.makeRequest('/user/create', {
-            'username': self.username,
-            'password': self.password
+            'username': username,
+            'password': password
         })
-        self.token = response['token']
 
-    def tearDown(self):
+        return {
+            'username': username,
+            'password': password,
+            'response': response
+        }
+
+    def removeUser(self, info):
         """
-            Remove the test username at the end of the test.
+            Remove the test username account.
         """
         self.makeRequest('/user/remove', {
-            'username': self.username,
-            'password': self.password
+            'username': info['username'],
+            'password': info['password']
         })
 
     def makeRequest(self, path, data=None):
@@ -71,12 +76,22 @@ class TestBlog(unittest.TestCase):
 
         self.missingArguments(url, ['username', 'password'])
 
-        # already exists
-        response = self.makeRequest(url, {
-            'username': self.username,
-            'password': self.password
-        })
-        self.assertEqual(response['success'], False)
+        # create a new user
+        info = self.createUser()
+        response = info['response']
+
+        self.assertEqual(response['success'], True)
+        self.assertEqual('message' in response, True)
+        self.assertEqual('token' in response, True)
+
+        # try to create the same user (shouldn't work since it already exists)
+        info2 = self.createUser()
+        response2 = info2['response']
+
+        self.assertEqual(response2['success'], False)
+        self.assertEqual('message' in response2, True)
+
+        self.removeUser(info)
 
     def test_user_login(self):
         url = '/user/login'
