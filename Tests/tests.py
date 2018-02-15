@@ -77,7 +77,6 @@ class TestBlog(unittest.TestCase):
         # create a new user
         info = self.createUser()
         response = info['response']
-
         self.assertEqual(response['success'], True)
         self.assertEqual('message' in response, True)
         self.assertEqual('token' in response, True)
@@ -85,14 +84,41 @@ class TestBlog(unittest.TestCase):
         # try to create the same user (shouldn't work since it already exists)
         info2 = self.createUser()
         response2 = info2['response']
-
         self.assertEqual(response2['success'], False)
         self.assertEqual('message' in response2, True)
+        self.assertEqual('token' not in response2, True)
 
     def test_user_login(self):
         url = '/user/login'
 
         self.missingArguments(url, ['username', 'password'])
+
+        # login with an existing account credentials
+        info = self.createUser()
+        response = self.makeRequest(url, {
+            'username': info['username'],
+            'password': info['password']
+        })
+        self.assertEqual(response['success'], True)
+        self.assertEqual('token' in response, True)
+
+        # login with correct username but incorrect password
+        response2 = self.makeRequest(url, {
+            'username': info['username'],
+            'password': 'dsdsdadasdasd'
+        })
+        self.assertEqual(response2['success'], False)
+        self.assertEqual('message' in response2, True)
+        self.assertEqual('token' not in response2, True)
+
+        # login with incorrect username and password
+        response3 = self.makeRequest(url, {
+            'username': 'sdsadsdsdsd',
+            'password': 'sdsdsdsd'
+        })
+        self.assertEqual(response3['success'], False)
+        self.assertEqual('message' in response3, True)
+        self.assertEqual('token' not in response3, True)
 
     def test_user_remove(self):
         url = '/user/remove'
