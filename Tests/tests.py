@@ -4,11 +4,18 @@ import json
 import os.path
 from urllib.parse import urljoin
 import itertools
+import subprocess
 
 URL = 'http://localhost:8000/'
 
 
 class TestBlog(unittest.TestCase):
+    def setUp(self):
+        """
+            Clear the database before every test.
+        """
+        subprocess.call(["redis-cli", "flushall"])
+
     def createUser(self):
         """
             Create a test user account.
@@ -26,15 +33,6 @@ class TestBlog(unittest.TestCase):
             'password': password,
             'response': response
         }
-
-    def removeUser(self, info):
-        """
-            Remove the test username account.
-        """
-        self.makeRequest('/user/remove', {
-            'username': info['username'],
-            'password': info['password']
-        })
 
     def makeRequest(self, path, data=None):
         """
@@ -90,8 +88,6 @@ class TestBlog(unittest.TestCase):
 
         self.assertEqual(response2['success'], False)
         self.assertEqual('message' in response2, True)
-
-        self.removeUser(info)
 
     def test_user_login(self):
         url = '/user/login'
