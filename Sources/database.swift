@@ -35,21 +35,12 @@ class Database {
 
         do {
             self.client = try TCPClient(hostname:redisHost, port: redisPort, password: redisPassword)
-            try self.setupInitValues()
         }
 
         catch {
             Log.error("Redis error: \(error)")
             exit(1)
         }
-    }
-
-
-    /**
-     * Set up some initial values that are used by the program.
-     */
-    func setupInitValues() throws {
-        try self.client.command(.set, ["LAST_POST_ID", "-1", "NX"])
     }
 
 
