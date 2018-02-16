@@ -122,13 +122,109 @@ class TestBlog(unittest.TestCase):
 
     def test_user_remove(self):
         url = '/user/remove'
+        info = self.createUser()
 
         self.missingArguments(url, ['username', 'password'])
 
+        # try to remove with invalid username
+        response = self.makeRequest(url, {
+            'username': 'sdadasdsad',
+            'password': 'ddsdsdsdsda'
+        })
+        self.assertEqual(response['success'], False)
+        self.assertEqual('message' in response, True)
+
+        # try to remove with invalid password
+        response2 = self.makeRequest(url, {
+            'username': info['username'],
+            'password': 'sdsdadsaddsd'
+        })
+        self.assertEqual(response2['success'], False)
+        self.assertEqual('message' in response2, True)
+
+        # remove a user properly
+        response3 = self.makeRequest(url, {
+            'username': info['username'],
+            'password': info['password']
+        })
+        self.assertEqual(response3['success'], True)
+
     def test_user_change_password(self):
         url = '/user/change_password'
+        info = self.createUser()
+        newPass = 'cccccc'
 
         self.missingArguments(url, ['username', 'password', 'newPassword'])
+
+        # invalid username
+        response = self.makeRequest(
+            url, {
+                'username': 'sdsdsdsd',
+                'password': 'sdsddsd',
+                'newPassword': 'sdsdsdsd'
+            })
+        self.assertEqual(response['success'], False)
+        self.assertEqual('message' in response, True)
+
+        # invalid password
+        response2 = self.makeRequest(url, {
+            'username': info['username'],
+            'password': 'dsdsdsd'
+        })
+        self.assertEqual(response2['success'], False)
+        self.assertEqual('message' in response2, True)
+
+        # not a valid new password (too few characters)
+        response3 = self.makeRequest(
+            url, {
+                'username': info['username'],
+                'password': info['password'],
+                'newPassword': '1'
+            })
+        self.assertEqual(response3['success'], False)
+        self.assertEqual('message' in response3, True)
+
+        # correct usage
+        response4 = self.makeRequest(
+            url, {
+                'username': info['username'],
+                'password': info['password'],
+                'newPassword': newPass
+            })
+        self.assertEqual(response4['success'], True)
+        self.assertEqual('token' in response4, True)
+
+        # shouldn't be able to login with previous password
+        response5 = self.makeRequest('/user/login', {
+            'username': info['username'],
+            'password': info['password']
+        })
+        self.assertEqual(response5['success'], False)
+
+        # but it should work with the new password
+        response6 = self.makeRequest('/user/login', {
+            'username': info['username'],
+            'password': newPass
+        })
+        self.assertEqual(response6['success'], True)
+
+        # the old token shouldn't work either
+        response7 = self.makeRequest(
+            '/blog/add', {
+                'token': info['response']['token'],
+                'title': 'The title.',
+                'body': 'The body message.'
+            })
+        self.assertEqual(response7['success'], False)
+
+        # the new token should
+        response8 = self.makeRequest(
+            '/blog/add', {
+                'token': response4['token'],
+                'title': 'The title.',
+                'body': 'The body message.'
+            })
+        self.assertEqual(response8['success'], True)
 
     def test_user_invalidate_tokens(self):
         url = '/user/invalidate_tokens'
