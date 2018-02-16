@@ -37,6 +37,14 @@ class TestBlog(unittest.TestCase):
             'password': info['password']
         })
 
+    def addPost(self, info):
+        return self.makeRequest(
+            '/blog/add', {
+                'token': info['token'],
+                'title': 'The title.',
+                'body': 'The body message.'
+            })
+
     def makeRequest(self, path, data=None):
         """
             Make a GET request if 'data' is not passed.
@@ -297,6 +305,24 @@ class TestBlog(unittest.TestCase):
 
     def test_user_random(self):
         url = '/user/random'
+
+        # no users yet
+        response = self.makeRequest(url)
+        self.assertEqual(response['success'], False)
+        self.assertEqual('message' in response, True)
+
+        # one user added, should get that username
+        user = self.createUser('test1')
+        response = self.makeRequest(url)
+        self.assertEqual(response['success'], True)
+        self.assertEqual(response['username'], 'test1')
+        self.assertEqual(len(response['posts_ids']), 0)
+
+        # add one post and then check if its returned when getting a random user
+        post = self.addPost({'token': user['response']['token']})
+        response = self.makeRequest(url)
+        self.assertEqual(len(response['posts_ids']), 1)
+        self.assertEqual(int(response['posts_ids'][0]), post['post_id'])
 
     def test_blog_add(self):
         url = '/blog/add'
