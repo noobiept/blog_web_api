@@ -28,7 +28,7 @@ class TestBlog(unittest.TestCase):
         return {
             'username': username,
             'password': password,
-            'response': response
+            **response
         }
 
     def removeUser(self, info):
@@ -86,15 +86,13 @@ class TestBlog(unittest.TestCase):
         self.missingArguments(url, ['username', 'password'])
 
         # create a new user
-        info = self.createUser()
-        response = info['response']
+        response = self.createUser()
         self.assertEqual(response['success'], True)
         self.assertEqual('message' in response, True)
         self.assertEqual('token' in response, True)
 
         # try to create the same user (shouldn't work since it already exists)
-        info2 = self.createUser()
-        response = info2['response']
+        response = self.createUser()
         self.assertEqual(response['success'], False)
         self.assertEqual('message' in response, True)
         self.assertEqual('token' not in response, True)
@@ -223,7 +221,7 @@ class TestBlog(unittest.TestCase):
         # the old token shouldn't work either
         response = self.makeRequest(
             '/blog/add', {
-                'token': info['response']['token'],
+                'token': info['token'],
                 'title': 'The title.',
                 'body': 'The body message.'
             })
@@ -240,7 +238,7 @@ class TestBlog(unittest.TestCase):
     def test_user_invalidate_tokens(self):
         url = '/user/invalidate_tokens'
         info = self.createUser()
-        initialToken = info['response']['token']
+        initialToken = info['token']
 
         self.missingArguments(url, ['username', 'password'])
 
@@ -319,7 +317,7 @@ class TestBlog(unittest.TestCase):
         self.assertEqual(len(response['posts_ids']), 0)
 
         # add one post and then check if its returned when getting a random user
-        post = self.addPost({'token': user['response']['token']})
+        post = self.addPost(user)
         response = self.makeRequest(url)
         self.assertEqual(len(response['posts_ids']), 1)
         self.assertEqual(int(response['posts_ids'][0]), post['post_id'])
