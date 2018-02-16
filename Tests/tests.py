@@ -228,8 +228,45 @@ class TestBlog(unittest.TestCase):
 
     def test_user_invalidate_tokens(self):
         url = '/user/invalidate_tokens'
+        info = self.createUser()
+        initialToken = info['response']['token']
 
         self.missingArguments(url, ['username', 'password'])
+
+        # add a blog post
+        response = self.makeRequest(
+            '/blog/add', {
+                'token': initialToken,
+                'title': 'The title.',
+                'body': 'The body message.'
+            })
+        self.assertEqual(response['success'], True)
+
+        # invalidate the tokens
+        response = self.makeRequest(url, {
+            'username': info['username'],
+            'password': info['password']
+        })
+        newToken = response['token']
+        self.assertEqual(response['success'], True)
+        self.assertEqual('token' in response, True)
+
+        # shouldn't work now with old token
+        response = self.makeRequest(
+            '/blog/add', {
+                'token': initialToken,
+                'title': 'The title',
+                'body': 'The body message.'
+            })
+        self.assertEqual(response['success'], False)
+
+        # works with new token
+        response = self.makeRequest('/blog/add', {
+            'token': newToken,
+            'title': 'The title.',
+            'body': 'The body message.'
+        })
+        self.assertEqual(response['success'], True)
 
     def test_user_getall(self):
         url = '/user/getall'
