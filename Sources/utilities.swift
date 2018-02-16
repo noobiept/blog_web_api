@@ -83,7 +83,7 @@ func validatePassword(_ password: String, _ response: RouterResponse) throws -> 
  * Check if the 'token' has a valid 'username' associated.
  */
 func validateToken(_ params: [String: String], _ response: RouterResponse) throws -> String? {
-    guard let username = try? DB.getUserName(token: params["token"]!) else {
+    guard let username = try DB.getUserName(token: params["token"]!) else {
         try unsuccessfulRequest("Invalid authentication 'token'.", response, .notFound)
         return nil
     }
