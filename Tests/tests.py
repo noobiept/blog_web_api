@@ -16,13 +16,10 @@ class TestBlog(unittest.TestCase):
         """
         subprocess.call(["redis-cli", "flushall"])
 
-    def createUser(self):
+    def createUser(self, username='test', password='bbbbbb'):
         """
             Create a test user account.
         """
-        username = 'testUsername'
-        password = 'bbbbbb'
-
         response = self.makeRequest('/user/create', {
             'username': username,
             'password': password
@@ -33,6 +30,12 @@ class TestBlog(unittest.TestCase):
             'password': password,
             'response': response
         }
+
+    def removeUser(self, info):
+        return self.makeRequest('/user/remove', {
+            'username': info['username'],
+            'password': info['password']
+        })
 
     def makeRequest(self, path, data=None):
         """
@@ -273,6 +276,24 @@ class TestBlog(unittest.TestCase):
 
         response = self.makeRequest(url)
         self.assertEqual(response['success'], True)
+        self.assertEqual(len(response['users']), 0)
+
+        # add some users and check the length
+        user1 = self.createUser('test1')
+        response = self.makeRequest(url)
+        self.assertEqual(response['success'], True)
+        self.assertEqual(len(response['users']), 1)
+
+        user2 = self.createUser('test2')
+        response = self.makeRequest(url)
+        self.assertEqual(response['success'], True)
+        self.assertEqual(len(response['users']), 2)
+
+        # remove one user
+        self.removeUser(user2)
+        response = self.makeRequest(url)
+        self.assertEqual(response['success'], True)
+        self.assertEqual(len(response['users']), 1)
 
     def test_user_random(self):
         url = '/user/random'
