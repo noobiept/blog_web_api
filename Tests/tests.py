@@ -324,8 +324,74 @@ class TestBlog(unittest.TestCase):
 
     def test_blog_add(self):
         url = '/blog/add'
+        user = self.createUser()
+        title = 'The title.'
+        body = 'The body message.'
 
         self.missingArguments(url, ['token', 'title', 'body'])
+
+        # shouldn't work with an incorrect token
+        response = self.makeRequest(url, {
+            'token': 'aaaa',
+            'title': title,
+            'body': body
+        })
+        self.assertEqual(response['success'], False)
+        self.assertEqual('message' in response, True)
+
+        # there's a lower and upper limit to both the 'title' and 'body'
+        # test lower limit of 'title'
+        response = self.makeRequest(url, {
+            'token': user['token'],
+            'title': '1' * 4,
+            'body': body
+        })
+        self.assertEqual(response['success'], False)
+        self.assertEqual('message' in response, True)
+
+        # test upper limit of 'title'
+        response = self.makeRequest(url, {
+            'token': user['token'],
+            'title': '1' * 101,
+            'body': body
+        })
+        self.assertEqual(response['success'], False)
+        self.assertEqual('message' in response, True)
+
+        # test lower limit of 'body'
+        response = self.makeRequest(url, {
+            'token': user['token'],
+            'title': title,
+            'body': '1' * 9
+        })
+        self.assertEqual(response['success'], False)
+        self.assertEqual('message' in response, True)
+
+        # test upper limit of 'body'
+        response = self.makeRequest(url, {
+            'token': user['token'],
+            'title': title,
+            'body': '1' * 10001
+        })
+        self.assertEqual(response['success'], False)
+        self.assertEqual('message' in response, True)
+
+        # correct usage
+        response = self.makeRequest(url, {
+            'token': user['token'],
+            'title': title,
+            'body': body
+        })
+        self.assertEqual(response['success'], True)
+        self.assertEqual('post_id' in response, True)
+
+        # try to get it with the given ID, and compare the values
+        postId = response['post_id']
+        response = self.makeRequest("/blog/get/" + str(postId))
+        self.assertEqual(response['success'], True)
+        self.assertEqual(response['post']['body'], body)
+        self.assertEqual(response['post']['title'], title)
+        self.assertEqual(response['post']['author'], user['username'])
 
     def test_blog_get(self):
         url = '/blog/get/:blogId'
