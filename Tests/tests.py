@@ -426,8 +426,49 @@ class TestBlog(unittest.TestCase):
 
     def test_blog_remove(self):
         url = 'blog/remove'
+        user1 = self.createUser('test1')
+        user2 = self.createUser('test2')
 
         self.missingArguments(url, ['token', 'blogId'])
+
+        # test invalid token
+        response = self.makeRequest(url, {
+            'token': 'aaaa',
+            'blogId': 1
+        })
+        self.assertEqual(response['success'], False)
+        self.assertEqual('message' in response, True)
+
+        # test non-existing blog id
+        response = self.makeRequest(url, {
+            'token': user1['token'],
+            'blogId': 1
+        })
+        self.assertEqual(response['success'], False)
+        self.assertEqual('message' in response, True)
+
+        # try to remove a post that doesn't belong to you
+        post = self.addPost(user1)
+        postId = post['post_id']
+        response = self.makeRequest(url, {
+            'token': user2['token'],
+            'blogId': postId
+        })
+        self.assertEqual(response['success'], False)
+        self.assertEqual('message' in response, True)
+
+        # remove a post and try to get it to confirm if it was removed
+        response = self.makeRequest('/blog/get/{0}'.format(postId))
+        self.assertEqual(response['success'], True)
+
+        response = self.makeRequest(url, {
+            'token': user1['token'],
+            'blogId': postId
+        })
+        self.assertEqual(response['success'], True)
+
+        response = self.makeRequest('/blog/get/{0}'.format(postId))
+        self.assertEqual(response['success'], False)
 
     def test_blog_update(self):
         url = '/blog/update'
