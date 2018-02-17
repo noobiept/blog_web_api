@@ -38,12 +38,20 @@ class TestBlog(unittest.TestCase):
         })
 
     def addPost(self, info):
-        return self.makeRequest(
+        title = 'The title.'
+        body = 'The body message.'
+        response = self.makeRequest(
             '/blog/add', {
                 'token': info['token'],
-                'title': 'The title.',
-                'body': 'The body message.'
+                'title': title,
+                'body': body
             })
+
+        return {
+            'title': title,
+            'body': body,
+            **response
+        }
 
     def makeRequest(self, path, data=None):
         """
@@ -394,7 +402,27 @@ class TestBlog(unittest.TestCase):
         self.assertEqual(response['post']['author'], user['username'])
 
     def test_blog_get(self):
-        url = '/blog/get/:blogId'
+        url = '/blog/get/{0}'
+
+        # test with a string argument
+        response = self.makeRequest(url.format('a'))
+        self.assertEqual(response['success'], False)
+        self.assertEqual('message' in response, True)
+
+        # test with a non-existing ID
+        response = self.makeRequest(url.format(1))
+        self.assertEqual(response['success'], False)
+        self.assertEqual('message' in response, True)
+
+        # correct usage
+        user = self.createUser()
+        post = self.addPost(user)
+        response = self.makeRequest(url.format(post['post_id']))
+        self.assertEqual(response['success'], True)
+        self.assertEqual(response['post']['body'], post['body'])
+        self.assertEqual(response['post']['author'], user['username'])
+        self.assertEqual(response['post']['title'], post['title'])
+        self.assertEqual('last_updated' in response['post'], True)
 
     def test_blog_remove(self):
         url = 'blog/remove'
