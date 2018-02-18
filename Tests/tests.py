@@ -96,6 +96,18 @@ class TestBlog(unittest.TestCase):
         self.assertEqual(response['success'], False)
         self.assertEqual('message' in response, True)
 
+    def postTest(self, postId, author, title, body):
+        """
+            Check if a post of the given ID has the correct title/body/etc.
+        """
+        response = self.makeRequest('/blog/get/{0}'.format(postId))
+
+        self.assertEqual(response['success'], True)
+        self.assertEqual(response['post']['body'], body)
+        self.assertEqual(response['post']['author'], author)
+        self.assertEqual(response['post']['title'], title)
+        self.assertEqual('last_updated' in response['post'], True)
+
     def makeRequest(self, path, data=None):
         """
             Make a GET request if 'data' is not passed.
@@ -405,12 +417,7 @@ class TestBlog(unittest.TestCase):
         self.assertEqual('post_id' in response, True)
 
         # try to get it with the given ID, and compare the values
-        postId = response['post_id']
-        response = self.makeRequest("/blog/get/" + str(postId))
-        self.assertEqual(response['success'], True)
-        self.assertEqual(response['post']['body'], body)
-        self.assertEqual(response['post']['title'], title)
-        self.assertEqual(response['post']['author'], user['username'])
+        self.postTest(response['post_id'], user['username'], title, body)
 
     def test_blog_get(self):
         url = '/blog/get/{0}'
@@ -428,12 +435,7 @@ class TestBlog(unittest.TestCase):
         # correct usage
         user = self.createUser()
         post = self.addPost(user)
-        response = self.makeRequest(url.format(post['post_id']))
-        self.assertEqual(response['success'], True)
-        self.assertEqual(response['post']['body'], post['body'])
-        self.assertEqual(response['post']['author'], user['username'])
-        self.assertEqual(response['post']['title'], post['title'])
-        self.assertEqual('last_updated' in response['post'], True)
+        self.postTest(post['post_id'], user['username'], post['title'], post['body'])
 
     def test_blog_remove(self):
         url = 'blog/remove'
@@ -540,10 +542,7 @@ class TestBlog(unittest.TestCase):
         self.assertEqual(response['success'], True)
 
         # check if the changes were done
-        response = self.makeRequest('/blog/get/{0}'.format(postId))
-        self.assertEqual(response['success'], True)
-        self.assertEqual(response['post']['body'], newBody)
-        self.assertEqual(response['post']['title'], newTitle)
+        self.postTest(postId, user1['username'], newTitle, newBody)
 
     def test_blog_username_getall(self):
         url = '/blog/:username/getall'
