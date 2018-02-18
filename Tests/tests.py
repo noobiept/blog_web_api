@@ -37,12 +37,12 @@ class TestBlog(unittest.TestCase):
             'password': info['password']
         })
 
-    def addPost(self, info):
+    def addPost(self, userInfo):
         title = 'The title.'
         body = 'The body message.'
         response = self.makeRequest(
             '/blog/add', {
-                'token': info['token'],
+                'token': userInfo['token'],
                 'title': title,
                 'body': body
             })
@@ -435,7 +435,8 @@ class TestBlog(unittest.TestCase):
         # correct usage
         user = self.createUser()
         post = self.addPost(user)
-        self.postTest(post['post_id'], user['username'], post['title'], post['body'])
+        self.postTest(post['post_id'], user['username'],
+                      post['title'], post['body'])
 
     def test_blog_remove(self):
         url = 'blog/remove'
@@ -569,8 +570,40 @@ class TestBlog(unittest.TestCase):
     def test_blog_random(self):
         url = '/blog/random'
 
+        # test with no posts yet
+        response = self.makeRequest(url)
+        self.assertEqual(response['success'], False)
+        self.assertEqual('message' in response, True)
+
+        # test with 1 post added
+        user = self.createUser()
+        post = self.addPost(user)
+        response = self.makeRequest(url)
+        self.assertEqual(response['success'], True)
+        self.assertEqual(response['post']['title'], post['title'])
+        self.assertEqual(response['post']['body'], post['body'])
+        self.assertEqual(response['post']['author'], user['username'])
+
     def test_blog_getall(self):
         url = '/blog/getall'
+
+        # test with no posts yet
+        response = self.makeRequest(url)
+        self.assertEqual(response['success'], True)
+        self.assertEqual(len(response['posts_ids']), 0)
+
+        # test with 1 post
+        user = self.createUser()
+        post1 = self.addPost(user)
+        response = self.makeRequest(url)
+        self.assertEqual(response['success'], True)
+        self.assertEqual(len(response['posts_ids']), 1)
+
+        # test with 2
+        post2 = self.addPost(user)
+        response = self.makeRequest(url)
+        self.assertEqual(response['success'], True)
+        self.assertEqual(len(response['posts_ids']), 2)
 
 
 if __name__ == '__main__':
