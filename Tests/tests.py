@@ -545,7 +545,26 @@ class TestBlog(unittest.TestCase):
         self.postTest(postId, user1['username'], newTitle, newBody)
 
     def test_blog_username_getall(self):
-        url = '/blog/:username/getall'
+        url = '/blog/{0}/getall'
+
+        # test when username doesn't exist
+        response = self.makeRequest(url.format('a'))
+        self.assertEqual(response['success'], False)
+        self.assertEqual('message' in response, True)
+
+        # test with 0 posts
+        user = self.createUser()
+        username = user['username']
+        response = self.makeRequest(url.format(username))
+        self.assertEqual(response['success'], False)
+        self.assertEqual('message' in response, True)
+
+        # test with 1 post
+        post = self.addPost(user)
+        response = self.makeRequest(url.format(username))
+        self.assertEqual(response['success'], True)
+        self.assertEqual(len(response['posts_ids']), 1)
+        self.assertEqual(int(response['posts_ids'][0]), post['post_id'])
 
     def test_blog_random(self):
         url = '/blog/random'
