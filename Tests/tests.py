@@ -483,8 +483,67 @@ class TestBlog(unittest.TestCase):
 
     def test_blog_update(self):
         url = '/blog/update'
+        user1 = self.createUser('test1')
+        user2 = self.createUser('test2')
+        title = 'The title.'
+        body = 'The body message.'
 
         self.missingArguments(url, ['token', 'title', 'body', 'blogId'])
+
+        # test invalid token
+        response = self.makeRequest(url, {
+            'token': 'aaaa',
+            'blogId': 1,
+            'title': title,
+            'body': body
+        })
+        self.assertEqual(response['success'], False)
+        self.assertEqual('message' in response, True)
+
+        # test non-existing blog id
+        response = self.makeRequest(url, {
+            'token': user1['token'],
+            'blogId': 1,
+            'title': title,
+            'body': body
+        })
+        self.assertEqual(response['success'], False)
+        self.assertEqual('message' in response, True)
+
+        # try to update a post that doesn't belong to you
+        post = self.addPost(user1)
+        postId = post['post_id']
+        response = self.makeRequest(url, {
+            'token': user2['token'],
+            'blogId': postId,
+            'title': title,
+            'body': body
+        })
+        self.assertEqual(response['success'], False)
+        self.assertEqual('message' in response, True)
+
+        # test the 'title' and 'body' limits
+        self.titleBodyTest(url, {
+            'token': user1['token'],
+            'blogId': postId
+        })
+
+        # update a post correctly
+        newTitle = 'The new title!'
+        newBody = 'The brand new body message!'
+        response = self.makeRequest(url, {
+            'token': user1['token'],
+            'blogId': postId,
+            'title': newTitle,
+            'body': newBody
+        })
+        self.assertEqual(response['success'], True)
+
+        # check if the changes were done
+        response = self.makeRequest('/blog/get/{0}'.format(postId))
+        self.assertEqual(response['success'], True)
+        self.assertEqual(response['post']['body'], newBody)
+        self.assertEqual(response['post']['title'], newTitle)
 
     def test_blog_username_getall(self):
         url = '/blog/:username/getall'
