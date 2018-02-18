@@ -301,7 +301,8 @@ router.get("/blog/:username/getall") {
         return
     }
 
-    guard let postsList = try? DB.getUserPosts(username: username) else {
+    let postsList = try DB.getUserPosts(username: username)
+    guard postsList.count != 0 else {
         try unsuccessfulRequest("No posts found.", response, .notFound)
         return
     }
