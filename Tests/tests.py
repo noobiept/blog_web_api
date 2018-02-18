@@ -53,6 +53,49 @@ class TestBlog(unittest.TestCase):
             **response
         }
 
+    def titleBodyTest(self, url, data):
+        """
+            Test the lower and upper limit of the 'title' and 'body' values.
+        """
+        title = 'The title.'
+        body = 'The body message.'
+
+        # test lower limit of 'title'
+        response = self.makeRequest(url, {
+            **data,
+            'title': '1' * 4,
+            'body': body
+        })
+        self.assertEqual(response['success'], False)
+        self.assertEqual('message' in response, True)
+
+        # test upper limit of 'title'
+        response = self.makeRequest(url, {
+            **data,
+            'title': '1' * 101,
+            'body': body
+        })
+        self.assertEqual(response['success'], False)
+        self.assertEqual('message' in response, True)
+
+        # test lower limit of 'body'
+        response = self.makeRequest(url, {
+            **data,
+            'title': title,
+            'body': '1' * 9
+        })
+        self.assertEqual(response['success'], False)
+        self.assertEqual('message' in response, True)
+
+        # test upper limit of 'body'
+        response = self.makeRequest(url, {
+            **data,
+            'title': title,
+            'body': '1' * 10001
+        })
+        self.assertEqual(response['success'], False)
+        self.assertEqual('message' in response, True)
+
     def makeRequest(self, path, data=None):
         """
             Make a GET request if 'data' is not passed.
@@ -348,41 +391,9 @@ class TestBlog(unittest.TestCase):
         self.assertEqual('message' in response, True)
 
         # there's a lower and upper limit to both the 'title' and 'body'
-        # test lower limit of 'title'
-        response = self.makeRequest(url, {
-            'token': user['token'],
-            'title': '1' * 4,
-            'body': body
+        self.titleBodyTest(url, {
+            'token': user['token']
         })
-        self.assertEqual(response['success'], False)
-        self.assertEqual('message' in response, True)
-
-        # test upper limit of 'title'
-        response = self.makeRequest(url, {
-            'token': user['token'],
-            'title': '1' * 101,
-            'body': body
-        })
-        self.assertEqual(response['success'], False)
-        self.assertEqual('message' in response, True)
-
-        # test lower limit of 'body'
-        response = self.makeRequest(url, {
-            'token': user['token'],
-            'title': title,
-            'body': '1' * 9
-        })
-        self.assertEqual(response['success'], False)
-        self.assertEqual('message' in response, True)
-
-        # test upper limit of 'body'
-        response = self.makeRequest(url, {
-            'token': user['token'],
-            'title': title,
-            'body': '1' * 10001
-        })
-        self.assertEqual(response['success'], False)
-        self.assertEqual('message' in response, True)
 
         # correct usage
         response = self.makeRequest(url, {
