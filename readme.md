@@ -1,11 +1,9 @@
 # Try it out #
 
-
 [http://blog-web-api.herokuapp.com/](http://blog-web-api.herokuapp.com/)
 
 
 # Urls #
-
 
 | Url | Http method | Parameters | Description |
 |-----|-------------|------------|-------------|
@@ -25,19 +23,20 @@
 | /blog/getall | GET | | Get a list with all blog ids available. |
 
 
-# Example #
-
+# Usage Example #
 
 - curl --data "username=aaa&password=bbbbbb" http://localhost:8000/user/create
-- curl --data "token=cccccc&title=title&body=body" http://localhost:8000/blog/add
-- curl http://localhost:8000/blog/get/0
+- curl --data "token=cccccc&title=The title.&body=The message body." http://localhost:8000/blog/add
+- curl http://localhost:8000/blog/get/1
+- curl http://localhost:8000/blog/aaa/getall
+
 
 Use either `http://localhost:8000` (when testing locally) or the `http://blog-web-api.herokuapp.com` url (live server).
 
 
 # Dependencies #
 
-
+- [Swift](https://swift.org/)
 - [Kitura](http://www.kitura.io/)
 - [Redis](https://redis.io/)
 - [Heroku build pack](https://github.com/kylef/heroku-buildpack-swift)
@@ -45,6 +44,22 @@ Use either `http://localhost:8000` (when testing locally) or the `http://blog-we
 
 # Development #
 
+To try out the application locally, first install `swift` and `redis`, then run:
+
+- `redis-server`
+- `swift run`
+
+Now you can use `curl` for example to make requests.
+
+
+# Testing #
+
+Start the database (`redis-server`) and the application (`swift run`) and then run the tests.
+
+- `python3 Tests/tests.py`
+
+
+# Relevant Commands #
 
 | Command | Description |
 |---------|-------------|
@@ -52,19 +67,12 @@ Use either `http://localhost:8000` (when testing locally) or the `http://blog-we
 | `redis-server` | Start the redis server. |
 | `swift package update` | Update all dependencies to latest version. |
 | `swift run` | Compile and run the server. |
+| `python3 Tests/tests.py` | Run the tests. |
+| `autopep8 --in-place Tests/tests.py` | Run the auto-formatter for the tests. |
 | `git push heroku master` | Deploy to heroku. |
 
 
-# Testing #
-
-
-Start the database (`redis-server`) and the application (`swift run`) and then run the tests.
-
-- `python3 Tests/tests.py`
-
-
 # Database Keys #
-
 
 | Key | Description | Data Type |
 | ----|-------------|-----------|
