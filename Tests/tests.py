@@ -96,6 +96,23 @@ class TestBlog(unittest.TestCase):
         self.assertEqual(response['success'], False)
         self.assertEqual('message' in response, True)
 
+    def limitsTest(self, url, propName, lower, upper, data):
+        # test the lower limit
+        response = self.makeRequest(url, {
+            **data,
+            propName: '1' * (lower - 1)
+        })
+        self.assertEqual(response['success'], False)
+        self.assertEqual('message' in response, True)
+
+        # test the upper limit
+        response = self.makeRequest(url, {
+            **data,
+            propName: '1' * (upper + 1)
+        })
+        self.assertEqual(response['success'], False)
+        self.assertEqual('message' in response, True)
+
     def postTest(self, postId, author, title, body):
         """
             Check if a post of the given ID has the correct title/body/etc.
@@ -147,6 +164,14 @@ class TestBlog(unittest.TestCase):
         url = '/user/create'
 
         self.missingArguments(url, ['username', 'password'])
+
+        # test lower and upper limits of 'username' and 'password'
+        self.limitsTest(url, 'username', 3, 20, {
+            'password': 'bbbbbb'
+        })
+        self.limitsTest(url, 'password', 6, 20, {
+            'username': 'aaa'
+        })
 
         # create a new user
         response = self.createUser()
@@ -246,15 +271,11 @@ class TestBlog(unittest.TestCase):
         self.assertEqual(response['success'], False)
         self.assertEqual('message' in response, True)
 
-        # not a valid new password (too few characters)
-        response = self.makeRequest(
-            url, {
-                'username': info['username'],
-                'password': info['password'],
-                'newPassword': '1'
-            })
-        self.assertEqual(response['success'], False)
-        self.assertEqual('message' in response, True)
+        # not a valid new password (test the lower and upper limits)
+        self.limitsTest(url, 'newPassword', 6, 20, {
+            'username': info['username'],
+            'password': info['password']
+        })
 
         # correct usage
         response = self.makeRequest(
