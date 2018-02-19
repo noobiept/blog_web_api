@@ -7,6 +7,14 @@ import itertools
 import subprocess
 
 URL = 'http://localhost:8000/'
+USERNAME_LOWER_LIMIT = 3
+USERNAME_UPPER_LIMIT = 20
+PASSWORD_LOWER_LIMIT = 6
+PASSWORD_UPPER_LIMIT = 20
+TITLE_LOWER_LIMIT = 5
+TITLE_UPPER_LIMIT = 100
+BODY_LOWER_LIMIT = 10
+BODY_UPPER_LIMIT = 10000
 
 
 class TestBlog(unittest.TestCase):
@@ -57,11 +65,11 @@ class TestBlog(unittest.TestCase):
         """
             Test the lower and upper limit of the 'title' and 'body' values.
         """
-        self.limitsTest(url, 'title', 5, 100, {
+        self.limitsTest(url, 'title', TITLE_LOWER_LIMIT, TITLE_UPPER_LIMIT, {
             **data,
             'body': 'The body message.'
         })
-        self.limitsTest(url, 'body', 10, 10000, {
+        self.limitsTest(url, 'body', BODY_LOWER_LIMIT, BODY_UPPER_LIMIT, {
             **data,
             'title': 'The title.'
         })
@@ -136,10 +144,10 @@ class TestBlog(unittest.TestCase):
         self.missingArguments(url, ['username', 'password'])
 
         # test lower and upper limits of 'username' and 'password'
-        self.limitsTest(url, 'username', 3, 20, {
+        self.limitsTest(url, 'username', USERNAME_LOWER_LIMIT, USERNAME_UPPER_LIMIT, {
             'password': 'bbbbbb'
         })
-        self.limitsTest(url, 'password', 6, 20, {
+        self.limitsTest(url, 'password', PASSWORD_LOWER_LIMIT, PASSWORD_UPPER_LIMIT, {
             'username': 'aaa'
         })
 
@@ -242,7 +250,7 @@ class TestBlog(unittest.TestCase):
         self.assertEqual('message' in response, True)
 
         # not a valid new password (test the lower and upper limits)
-        self.limitsTest(url, 'newPassword', 6, 20, {
+        self.limitsTest(url, 'newPassword', PASSWORD_LOWER_LIMIT, PASSWORD_UPPER_LIMIT, {
             'username': info['username'],
             'password': info['password']
         })
