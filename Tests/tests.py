@@ -198,6 +198,8 @@ class TestBlog(unittest.TestCase):
     def test_user_remove(self):
         url = '/user/remove'
         info = self.createUser()
+        post = self.addPost(info)
+        username = info['username']
 
         self.missingArguments(url, ['username', 'password'])
 
@@ -211,18 +213,26 @@ class TestBlog(unittest.TestCase):
 
         # try to remove with invalid password
         response = self.makeRequest(url, {
-            'username': info['username'],
+            'username': username,
             'password': 'sdsdadsaddsd'
         })
         self.assertEqual(response['success'], False)
         self.assertEqual('message' in response, True)
 
-        # remove a user properly
+        # remove a user properly and check if the post was removed as well
+        response = self.makeRequest(
+            '/blog/{0}/getall'.format(username))
+        self.assertEqual(len(response['posts_ids']), 1)
+
         response = self.makeRequest(url, {
-            'username': info['username'],
+            'username': username,
             'password': info['password']
         })
         self.assertEqual(response['success'], True)
+
+        response = self.makeRequest(
+            '/blog/{0}/getall'.format(username))
+        self.assertEqual(response['success'], False)
 
     def test_user_change_password(self):
         url = '/user/change_password'
