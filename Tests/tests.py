@@ -57,44 +57,14 @@ class TestBlog(unittest.TestCase):
         """
             Test the lower and upper limit of the 'title' and 'body' values.
         """
-        title = 'The title.'
-        body = 'The body message.'
-
-        # test lower limit of 'title'
-        response = self.makeRequest(url, {
+        self.limitsTest(url, 'title', 5, 100, {
             **data,
-            'title': '1' * 4,
-            'body': body
+            'body': 'The body message.'
         })
-        self.assertEqual(response['success'], False)
-        self.assertEqual('message' in response, True)
-
-        # test upper limit of 'title'
-        response = self.makeRequest(url, {
+        self.limitsTest(url, 'body', 10, 10000, {
             **data,
-            'title': '1' * 101,
-            'body': body
+            'title': 'The title.'
         })
-        self.assertEqual(response['success'], False)
-        self.assertEqual('message' in response, True)
-
-        # test lower limit of 'body'
-        response = self.makeRequest(url, {
-            **data,
-            'title': title,
-            'body': '1' * 9
-        })
-        self.assertEqual(response['success'], False)
-        self.assertEqual('message' in response, True)
-
-        # test upper limit of 'body'
-        response = self.makeRequest(url, {
-            **data,
-            'title': title,
-            'body': '1' * 10001
-        })
-        self.assertEqual(response['success'], False)
-        self.assertEqual('message' in response, True)
 
     def limitsTest(self, url, propName, lower, upper, data):
         # test the lower limit
