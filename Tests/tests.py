@@ -5,6 +5,7 @@ import os.path
 from urllib.parse import urljoin
 import itertools
 import subprocess
+import os
 
 URL = 'http://localhost:8000/'
 USERNAME_LOWER_LIMIT = 3
@@ -15,6 +16,7 @@ TITLE_LOWER_LIMIT = 5
 TITLE_UPPER_LIMIT = 100
 BODY_LOWER_LIMIT = 10
 BODY_UPPER_LIMIT = 10000
+DEVNULL = open(os.devnull, 'w')
 
 
 class TestBlog(unittest.TestCase):
@@ -22,7 +24,7 @@ class TestBlog(unittest.TestCase):
         """
             Clear the database before every test.
         """
-        subprocess.call(["redis-cli", "flushall"])
+        subprocess.call(["redis-cli", "flushall"], stdout=DEVNULL)
 
     def createUser(self, username='test', password='bbbbbb'):
         """
